@@ -1,0 +1,36 @@
+import { PromptDefinition } from '../types.js';
+
+export const months: PromptDefinition = {
+  id: 'months',
+  category: 'Months of the Year',
+  promptText: 'Name a month of the year.',
+  canonicalAnswers: [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
+  ],
+  aliases: {
+    Jan: 'January',
+    Feb: 'February',
+    Mar: 'March',
+    Apr: 'April',
+    Jun: 'June',
+    Jul: 'July',
+    Aug: 'August',
+    Sep: 'September',
+    Sept: 'September',
+    Oct: 'October',
+    Nov: 'November',
+    Dec: 'December',
+  },
+  hostAnswer: 'January',
+};
