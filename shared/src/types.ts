@@ -58,6 +58,7 @@ export interface RevealEntry {
 export interface RevealPayload {
   promptId: string;
   category: string;
+  promptText: string;
   hostAnswer: string;
   /** Every player's outcome this round — safe to share with everyone once the round is scored. */
   perPlayer: RevealEntry[];

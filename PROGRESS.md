@@ -65,6 +65,14 @@ the server; clients just render whatever snapshot they're sent.
 - **Round polish** — a color-shifting countdown bar (green → amber → red, with a pulse near zero)
   instead of a plain number; reveal rows/cards get an icon + tinted background per outcome; the
   host's prompt picker is one combined reorderable list instead of two duplicate lists.
+- **Reveal card redesign** (`client/src/components/RevealCard.tsx`) — cut the redundancy that had
+  built up across several features (host's answer and running score were each already shown
+  elsewhere on the same screen); "counted as" now only appears when it actually differs from what
+  you typed; the score delta is now a bold color-coded pill next to the icon and message instead
+  of a plain text line.
+- **Prompt reference on the reveal screen** — the round's category and full prompt text are now
+  shown again at the top of the results view (host and player both), so nobody has to remember
+  what was actually asked while looking at the histogram/reveal.
 - **Verification**: automated end-to-end smoke tests (simulated multi-player games driven via
   `socket.io-client`, not just unit tests) confirmed the full room→round→scoring→reveal→
   game-over loop, ties, the reconnect-after-refresh handshake, and the player-side reveal payload
@@ -91,6 +99,20 @@ the server; clients just render whatever snapshot they're sent.
   - Fixed by switching to `sessionStorage` (`HostContext.tsx`, `PlayerContext.tsx`), which is
     isolated per browser tab/window but still survives a refresh of that same tab — the actual
     behavior wanted, versus identity being shared across unrelated tabs.
+
+## Open design questions (paused, awaiting a decision)
+
+- **Should players with a negative score be eliminated?** Raised as an idea to add stakes.
+  Concern flagged before building anything: going negative can happen from bad luck (matching
+  the host's predetermined answer isn't predictable) as much as bad play, and true elimination
+  mid-game means that player sits out the rest of a short session — usually a net loss for a
+  party game. Three options on the table, not yet chosen:
+  1. **Soft elimination (recommended)** — flag as "eliminated" (badge, excluded from winning)
+     but they keep answering and appearing in the histogram every round.
+  2. **Hard elimination** — fully removed from future rounds' scoring once negative; higher
+     stakes, but they stop participating.
+  3. **No elimination, just clamp score at 0** — simplest change, nobody is singled out.
+  Current behavior (do nothing, scores can go negative freely) also remains an option.
 
 ## Known gaps (flagged intentionally, not oversights)
 
@@ -125,10 +147,12 @@ the same LAN using your machine's IP instead of `localhost`).
 
 ## Suggested next steps
 
-1. Keep playtesting in the browser and report anything that looks or feels off.
-2. Decide on real `hostAnswer` values per prompt if the placeholders aren't acceptable.
-3. Source the authoritative Philippine provinces list + spelling-variant aliases.
-4. Sign off on (or replace) the placeholder timeout reveal messages.
-5. Give `--host-match` its own distinct color, separate from `--invalid`.
-6. Optional next round of polish: transitions between round states, a QR code for joining,
+1. Decide on the negative-score/elimination question above (soft elimination, hard elimination,
+   clamp at 0, or leave as-is) — implementation is on hold until then.
+2. Keep playtesting in the browser and report anything that looks or feels off.
+3. Decide on real `hostAnswer` values per prompt if the placeholders aren't acceptable.
+4. Source the authoritative Philippine provinces list + spelling-variant aliases.
+5. Sign off on (or replace) the placeholder timeout reveal messages.
+6. Give `--host-match` its own distinct color, separate from `--invalid`.
+7. Optional next round of polish: transitions between round states, a QR code for joining,
    sound cues on reveal, an accessibility pass (focus outlines, contrast, aria-labels).

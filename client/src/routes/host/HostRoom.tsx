@@ -76,9 +76,8 @@ export function HostRoom() {
 
       {state.status === 'reveal' && state.reveal && (
         <section>
-          <h2>
-            {state.reveal.category} — Host's answer: {state.reveal.hostAnswer}
-          </h2>
+          <h2>{state.reveal.category}</h2>
+          <p className="prompt-reference">{state.reveal.promptText}</p>
           <AnswerHistogram perPlayer={state.reveal.perPlayer} hostAnswer={state.reveal.hostAnswer} />
           <table className="reveal-grid">
             <thead>

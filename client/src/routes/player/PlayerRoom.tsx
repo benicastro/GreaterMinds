@@ -50,7 +50,9 @@ export function PlayerRoom() {
 
       {state.status === 'reveal' && state.reveal && (
         <>
-          <RevealCard entry={state.reveal.entry} hostAnswer={state.reveal.hostAnswer} />
+          <h2>{state.reveal.category}</h2>
+          <p className="prompt-reference">{state.reveal.promptText}</p>
+          <RevealCard entry={state.reveal.entry} />
           <section>
             <h3>What Everyone Picked</h3>
             <AnswerHistogram

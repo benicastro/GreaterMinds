@@ -302,7 +302,13 @@ export class Room {
       };
     });
 
-    this.lastReveal = { promptId: def.id, category: def.category, hostAnswer: def.hostAnswer, perPlayer };
+    this.lastReveal = {
+      promptId: def.id,
+      category: def.category,
+      promptText: def.promptText,
+      hostAnswer: def.hostAnswer,
+      perPlayer,
+    };
     this.status = 'reveal';
     this.touch();
     this.onStateChange();

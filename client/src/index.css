@@ -52,6 +52,12 @@ h3 {
   margin: 0 0 8px;
 }
 
+.prompt-reference {
+  color: var(--muted);
+  font-style: italic;
+  margin: 0 0 16px;
+}
+
 .tagline {
   font-style: italic;
   color: var(--muted);
@@ -327,21 +333,46 @@ header {
 .reveal-card {
   border-left: 6px solid var(--muted);
   border-radius: 8px;
-  padding: 20px 20px 20px 24px;
+  padding: 18px 20px;
 }
 
-.reveal-card .reveal-message {
+.reveal-headline {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin: 0 0 8px;
 }
 
 .reveal-icon {
-  font-size: 1.75rem;
+  font-size: 1.75em;
   line-height: 1;
+  flex-shrink: 0;
+}
+
+.reveal-message {
+  flex: 1;
+  font-size: 1.3em;
+  font-weight: 700;
+  margin: 0;
+}
+
+.reveal-delta-badge {
+  flex-shrink: 0;
+  font-size: 1.2em;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  padding: 4px 16px;
+  border-radius: 999px;
+  color: #14121a;
+  background: var(--muted);
+}
+
+.reveal-answer {
+  margin: 14px 0 0;
+  color: var(--muted);
+}
+
+.reveal-answer strong {
+  color: var(--text);
 }
 
 .reveal-grid .outcome-icon {
@@ -378,6 +409,26 @@ header {
 .reveal-grid tr.outcome-timeout {
   border-color: var(--timeout);
   background: rgba(148, 163, 184, 0.1);
+}
+
+.reveal-card.outcome-unique .reveal-delta-badge {
+  background: var(--unique);
+}
+
+.reveal-card.outcome-player-match .reveal-delta-badge {
+  background: var(--player-match);
+}
+
+.reveal-card.outcome-host-match .reveal-delta-badge {
+  background: var(--host-match);
+}
+
+.reveal-card.outcome-invalid .reveal-delta-badge {
+  background: var(--invalid);
+}
+
+.reveal-card.outcome-timeout .reveal-delta-badge {
+  background: var(--timeout);
 }
 
 .error {
