@@ -15,7 +15,8 @@ export const REVEAL_MESSAGES: Record<OutcomeBucket, string[]> = {
     'That one hurts.',
   ],
   invalid: ['Rejected.', "Different is good. Wrong is not.", 'Nice try.', "That answer doesn't count."],
-  // TODO(content): doc doesn't specify timeout messages — placeholder set, pending sign-off.
+  // Doc didn't specify timeout messages (only the other 4 outcomes) — this set was written to
+  // match the tone and confirmed by the user rather than sourced from the design doc.
   timeout: ['Too Slow.', 'The Clock Wins.', "Silence Isn't Golden.", 'Missed Your Moment.'],
 };
 

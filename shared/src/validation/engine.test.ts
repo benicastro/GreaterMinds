@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { compilePrompt, classifyAnswer } from './engine.js';
 import { PROMPTS_BY_ID } from '../prompts/index.js';
+import { PH_PROVINCES } from '../data/ph-provinces.js';
 
 function classify(promptId: string, raw: string) {
   const def = PROMPTS_BY_ID.get(promptId);
@@ -108,11 +109,117 @@ describe('canadian-province', () => {
   });
 });
 
+describe('ph-province', () => {
+  it('has exactly the 82 official provinces, no duplicates', () => {
+    expect(PH_PROVINCES.length).toBe(82);
+    expect(new Set(PH_PROVINCES).size).toBe(82);
+  });
+
+  it('accepts provinces from a range of regions', () => {
+    expect(classify('ph-province', 'rizal')).toEqual({ valid: true, canonicalAnswer: 'Rizal' });
+    expect(classify('ph-province', 'Sulu')).toEqual({ valid: true, canonicalAnswer: 'Sulu' });
+    expect(classify('ph-province', 'benguet')).toEqual({ valid: true, canonicalAnswer: 'Benguet' });
+    expect(classify('ph-province', 'Maguindanao del Sur')).toEqual({
+      valid: true,
+      canonicalAnswer: 'Maguindanao del Sur',
+    });
+  });
+
+  it('accepts renamed/legacy province name aliases', () => {
+    expect(classify('ph-province', 'Compostela Valley')).toEqual({ valid: true, canonicalAnswer: 'Davao de Oro' });
+    expect(classify('ph-province', 'Western Samar')).toEqual({ valid: true, canonicalAnswer: 'Samar' });
+    expect(classify('ph-province', 'North Cotabato')).toEqual({ valid: true, canonicalAnswer: 'Cotabato' });
+    expect(classify('ph-province', 'Mindoro Occidental')).toEqual({
+      valid: true,
+      canonicalAnswer: 'Occidental Mindoro',
+    });
+  });
+
+  it('rejects regions and cities that are not provinces', () => {
+    expect(classify('ph-province', 'Metro Manila')).toEqual({ valid: false });
+    expect(classify('ph-province', 'NCR')).toEqual({ valid: false });
+    expect(classify('ph-province', 'Quezon City')).toEqual({ valid: false });
+  });
+
+  it('does not resolve the ambiguous pre-split "Maguindanao" name', () => {
+    expect(classify('ph-province', 'Maguindanao')).toEqual({ valid: false });
+  });
+});
+
 describe('asean-country', () => {
   it('accepts long-form aliases', () => {
     expect(classify('asean-country', 'Brunei Darussalam')).toEqual({ valid: true, canonicalAnswer: 'Brunei' });
     expect(classify('asean-country', 'Lao PDR')).toEqual({ valid: true, canonicalAnswer: 'Laos' });
     expect(classify('asean-country', 'Viet Nam')).toEqual({ valid: true, canonicalAnswer: 'Vietnam' });
+  });
+});
+
+describe('ph-region', () => {
+  it('accepts common names and numbered-region aliases', () => {
+    expect(classify('ph-region', 'Metro Manila')).toEqual({ valid: true, canonicalAnswer: 'NCR' });
+    expect(classify('ph-region', 'Region 1')).toEqual({ valid: true, canonicalAnswer: 'Ilocos Region' });
+    expect(classify('ph-region', 'Region III')).toEqual({ valid: true, canonicalAnswer: 'Central Luzon' });
+    expect(classify('ph-region', 'Region 4-A')).toEqual({ valid: true, canonicalAnswer: 'CALABARZON' });
+    expect(classify('ph-region', 'Region IV-B')).toEqual({ valid: true, canonicalAnswer: 'MIMAROPA' });
+    expect(classify('ph-region', 'Bangsamoro')).toEqual({ valid: true, canonicalAnswer: 'BARMM' });
+    expect(classify('ph-region', 'ARMM')).toEqual({ valid: true, canonicalAnswer: 'BARMM' });
+  });
+
+  it('does not resolve the ambiguous bare "Region 4"', () => {
+    expect(classify('ph-region', 'Region 4')).toEqual({ valid: false });
+    expect(classify('ph-region', 'Region IV')).toEqual({ valid: false });
+  });
+});
+
+describe('harry-potter-house', () => {
+  it('accepts all four houses', () => {
+    expect(classify('harry-potter-house', 'slytherin')).toEqual({ valid: true, canonicalAnswer: 'Slytherin' });
+  });
+
+  it('rejects a non-house', () => {
+    expect(classify('harry-potter-house', 'Durmstrang')).toEqual({ valid: false });
+  });
+});
+
+describe('infinity-stone', () => {
+  it('accepts the bare color-word alias', () => {
+    expect(classify('infinity-stone', 'Time')).toEqual({ valid: true, canonicalAnswer: 'Time Stone' });
+    expect(classify('infinity-stone', 'soul')).toEqual({ valid: true, canonicalAnswer: 'Soul Stone' });
+  });
+
+  it('accepts the full canonical form', () => {
+    expect(classify('infinity-stone', 'Power Stone')).toEqual({ valid: true, canonicalAnswer: 'Power Stone' });
+  });
+});
+
+describe('card-suit', () => {
+  it('accepts singular-form aliases', () => {
+    expect(classify('card-suit', 'Spade')).toEqual({ valid: true, canonicalAnswer: 'Spades' });
+    expect(classify('card-suit', 'heart')).toEqual({ valid: true, canonicalAnswer: 'Hearts' });
+  });
+
+  it('rejects a non-suit', () => {
+    expect(classify('card-suit', 'Jokers')).toEqual({ valid: false });
+  });
+});
+
+describe('friends-character', () => {
+  it('accepts first-name aliases', () => {
+    expect(classify('friends-character', 'ross')).toEqual({ valid: true, canonicalAnswer: 'Ross Geller' });
+    expect(classify('friends-character', 'Phoebe')).toEqual({ valid: true, canonicalAnswer: 'Phoebe Buffay' });
+  });
+
+  it('accepts full canonical names', () => {
+    expect(classify('friends-character', 'Joey Tribbiani')).toEqual({ valid: true, canonicalAnswer: 'Joey Tribbiani' });
+  });
+
+  it('rejects a non-main-cast character', () => {
+    expect(classify('friends-character', 'Gunther')).toEqual({ valid: false });
+    expect(classify('friends-character', 'Janice')).toEqual({ valid: false });
+  });
+
+  it('does not resolve the ambiguous shared surname "Geller"', () => {
+    expect(classify('friends-character', 'Geller')).toEqual({ valid: false });
   });
 });
 

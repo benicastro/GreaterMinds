@@ -2,7 +2,7 @@
 
 ## Status: MVP playable end-to-end
 
-A full game (host + multiple players, all 15 prompts, scoring, reveal, leaderboard) can be
+A full game (host + multiple players, 20 prompts, scoring, reveal, leaderboard) can be
 played in the browser today via `npm run dev`. See `Greater Minds Game Design.pdf` for the
 original design doc and `C:\Users\CanPhi2\.claude\plans\bubbly-stargazing-plum.md` for the
 build plan this was implemented against.
@@ -11,7 +11,7 @@ build plan this was implemented against.
 
 npm workspaces monorepo, TypeScript throughout:
 
-- **`shared/`** (`@greater-minds/shared`) — single source of truth for the 15 prompt
+- **`shared/`** (`@greater-minds/shared`) — single source of truth for all 20 prompt
   definitions, the answer-validation engine, Socket.IO event name constants, shared types,
   reveal messages, and branding strings. Imported by both `server` and `client` so prompt
   data and event contracts can't drift between them.
@@ -25,14 +25,22 @@ the server; clients just render whatever snapshot they're sent.
 
 ## What's implemented
 
-- **All 15 prompts** from the design doc (`shared/src/prompts/*.ts`), each with canonical
-  answers, alias/abbreviation maps, and explicit rejections where the doc calls for them
-  (Pluto; Pateros/Metro Manila/NCR; the Canadian territories). The number-1-10 prompt has the
+- **All 20 prompts** (`shared/src/prompts/*.ts`) — the original 15 from the design doc plus 5
+  backup prompts added later (Region of the Philippines, Harry Potter House, Infinity Stone,
+  Playing Card Suit, Friends Character), each with canonical answers, alias/abbreviation maps,
+  and explicit rejections where called for (Pluto; Pateros/Metro Manila/NCR; the Canadian
+  territories; ambiguous pre-split names like "Maguindanao," "Region 4," and "Geller" are
+  deliberately left unaliased rather than arbitrarily resolved). The number-1-10 prompt has the
   one bit of custom logic in the whole bank (word-form parsing, integer/range check) — every
   other prompt, including the ones that look tricky, is pure data on top of the generic
   validation engine.
+- **Every prompt's `hostAnswer` is a deliberate, confirmed pick** (not a placeholder) — went
+  through all 20 one at a time and set real values.
+- **Philippine Province has the real official list** — all 82 provinces (post-2022 Maguindanao
+  del Norte/del Sur split), replacing an earlier 10-province stub, plus aliases for commonly
+  used renamed/legacy names (Compostela Valley, Western Samar, North Cotabato).
 - **Validation engine** (`shared/src/validation/`) — normalize → compile → classify, with a
-  32-case Vitest suite covering aliases, rejections, case/diacritic handling, and every
+  54-case Vitest suite covering aliases, rejections, case/diacritic handling, and every
   prompt's `hostAnswer` round-tripping correctly.
 - **Scoring** (`server/src/game/scoring.ts`) — implements the doc's exact priority rule:
   timeout/invalid = −2, host-match = −2 (checked before player-match), player-match = −1,
@@ -73,6 +81,35 @@ the server; clients just render whatever snapshot they're sent.
 - **Prompt reference on the reveal screen** — the round's category and full prompt text are now
   shown again at the top of the results view (host and player both), so nobody has to remember
   what was actually asked while looking at the histogram/reveal.
+- **Host passcode gate** (`server/.env`'s `HOST_PASSCODE`) — "Host a Game" now requires a
+  passcode only the host knows before a room can be created; wrong/missing passcode is rejected
+  server-side. Unset entirely, hosting stays open (useful for local dev).
+- **Host-controlled "starting" screen** — after clicking Start Game, both the host screen and
+  every player's phone go full-page with a title-art slide, then (host clicks "Next") an
+  infographic slide explaining the rules, in sync for everyone — the host controls pacing with
+  a "Next" / "Start Round 1" button; round 1's timer only starts once the host actually begins
+  it, so nobody loses answer time to the intro.
+- **Timeout reveal messages are confirmed**, not placeholders — the design doc never specified
+  copy for "no answer submitted," so a matching-tone set was written and the user signed off on
+  keeping it as-is.
+- **Company branding footer** — "Powered by the Bayanihan spirit" + the Bayanihan Partners logo
+  (`client/public/bp-logo.png`) on the Landing page and the Final Results screen only, kept off
+  the busier gameplay screens. The company name itself is intentionally not shown as text (only
+  in the logo's alt text for screen readers) per a later request to keep it purely evocative.
+- **Hard elimination** — a player's score dropping below 0 eliminates them for the rest of the
+  game: they stop being prompted for answers (server rejects submissions from them defensively
+  too), they're excluded from the "how many have answered" count and from scoring/collisions in
+  every subsequent round, and they're marked "ELIMINATED" wherever they appear (roster, reveal
+  grid, their own header, the final leaderboard). They still see the round they got eliminated
+  on (with a distinct elimination banner on their reveal card) before flipping into a spectator
+  view for everything after. Because elimination is defined as score < 0, a still-active
+  player's score can never be lower than an eliminated one's — so eliminated players can never
+  outrank survivors on the leaderboard by construction, no extra exclusion logic needed. If
+  every remaining active player gets eliminated in the same round, the game ends immediately on
+  the next advance instead of trying to start a round with nobody left to answer. Verified live
+  against the real server: gradual elimination via repeated timeouts, post-elimination
+  spectating (rejected submissions, excluded from the round's reveal/histogram), the final
+  leaderboard ranking, and the simultaneous-elimination early-game-over edge case.
 - **Verification**: automated end-to-end smoke tests (simulated multi-player games driven via
   `socket.io-client`, not just unit tests) confirmed the full room→round→scoring→reveal→
   game-over loop, ties, the reconnect-after-refresh handshake, and the player-side reveal payload
@@ -100,31 +137,8 @@ the server; clients just render whatever snapshot they're sent.
     isolated per browser tab/window but still survives a refresh of that same tab — the actual
     behavior wanted, versus identity being shared across unrelated tabs.
 
-## Open design questions (paused, awaiting a decision)
-
-- **Should players with a negative score be eliminated?** Raised as an idea to add stakes.
-  Concern flagged before building anything: going negative can happen from bad luck (matching
-  the host's predetermined answer isn't predictable) as much as bad play, and true elimination
-  mid-game means that player sits out the rest of a short session — usually a net loss for a
-  party game. Three options on the table, not yet chosen:
-  1. **Soft elimination (recommended)** — flag as "eliminated" (badge, excluded from winning)
-     but they keep answering and appearing in the histogram every round.
-  2. **Hard elimination** — fully removed from future rounds' scoring once negative; higher
-     stakes, but they stop participating.
-  3. **No elimination, just clamp score at 0** — simplest change, nobody is singled out.
-  Current behavior (do nothing, scores can go negative freely) also remains an option.
-
 ## Known gaps (flagged intentionally, not oversights)
 
-- **`shared/src/data/ph-provinces.ts` is a stub** (10 sample provinces, not the real ~82).
-  Needs sourcing/verification before the Philippine Province prompt is play-ready — not
-  invented, per the build plan.
-- **Timeout reveal messages are placeholders.** The design doc only specifies flavor text for
-  unique/player-match/host-match/invalid outcomes, not for "no answer submitted." A placeholder
-  set is in `shared/src/messages/revealMessages.ts`, marked with a TODO.
-- **`hostAnswer` values are arbitrary placeholders** (e.g. "Red" for rainbow colors, "7" for
-  the number prompt) since the doc says each prompt's host answer should be predetermined but
-  doesn't say what it is. Worth a deliberate pass if specific answers are wanted.
 - **`--host-match` and `--invalid` share the exact same red** in the color palette (predates
   this round of polish). Differentiated today by icon/badge/label, not color alone, but a
   distinct hue for host-match would read faster, especially on the histogram bars.
@@ -143,16 +157,14 @@ npm run dev
 
 Starts the server (`:4000`) and Vite client (prints its own port, typically `:5173`)
 concurrently. Open the client URL, host a game in one tab, join from others (or real phones on
-the same LAN using your machine's IP instead of `localhost`).
+the same LAN using your machine's IP instead of `localhost`). Copy `server/.env.example` to
+`server/.env` and set `HOST_PASSCODE` to restrict who can create a room — without it, hosting
+is open to anyone.
 
 ## Suggested next steps
 
-1. Decide on the negative-score/elimination question above (soft elimination, hard elimination,
-   clamp at 0, or leave as-is) — implementation is on hold until then.
-2. Keep playtesting in the browser and report anything that looks or feels off.
-3. Decide on real `hostAnswer` values per prompt if the placeholders aren't acceptable.
-4. Source the authoritative Philippine provinces list + spelling-variant aliases.
-5. Sign off on (or replace) the placeholder timeout reveal messages.
-6. Give `--host-match` its own distinct color, separate from `--invalid`.
-7. Optional next round of polish: transitions between round states, a QR code for joining,
+1. Keep playtesting in the browser and report anything that looks or feels off — hard
+   elimination in particular is worth a real multi-player playtest to see how it feels.
+2. Give `--host-match` its own distinct color, separate from `--invalid`.
+3. Optional next round of polish: transitions between round states, a QR code for joining,
    sound cues on reveal, an accessibility pass (focus outlines, contrast, aria-labels).

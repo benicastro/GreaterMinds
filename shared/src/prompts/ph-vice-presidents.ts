@@ -20,5 +20,5 @@ export const phVicePresidents: PromptDefinition = {
     'Robredo',
     'Duterte',
   ],
-  hostAnswer: 'Laurel',
+  hostAnswer: 'Robredo',
 };

@@ -9,6 +9,7 @@ import { LeaderboardTable } from '../../components/LeaderboardTable';
 import { AnswerHistogram } from '../../components/AnswerHistogram';
 import { Confetti } from '../../components/Confetti';
 import { GetReadyScreen } from '../../components/GetReadyScreen';
+import { PoweredByFooter } from '../../components/PoweredByFooter';
 import { OUTCOME_ICON } from '../../outcomeMeta';
 import { formatWinnerAnnouncement, getWinners } from '../../winnerAnnouncement';
 
@@ -41,6 +42,7 @@ export function HostRoom() {
   }
 
   const isLastRound = state.currentRoundNumber !== null && state.currentRoundNumber >= state.totalRounds;
+  const activePlayerCount = state.players.filter((player) => !player.eliminated).length;
 
   return (
     <div className="host-room">
@@ -83,7 +85,7 @@ export function HostRoom() {
           <p>{state.currentRound.promptText}</p>
           <TimerBar endsAt={state.currentRound.endsAt} durationSeconds={state.currentRound.durationSeconds} />
           <p>
-            {state.answeredCount} / {state.players.length} answered
+            {state.answeredCount} / {activePlayerCount} answered
           </p>
           <button onClick={forceCloseRound}>Force Close Round</button>
         </section>
@@ -111,7 +113,10 @@ export function HostRoom() {
                   <td className="outcome-icon">{OUTCOME_ICON[entry.outcome]}</td>
                   <td>{entry.nickname}</td>
                   <td>{entry.rawAnswer ?? '(none)'}</td>
-                  <td>{entry.message}</td>
+                  <td>
+                    {entry.message}
+                    {entry.eliminated && <span className="eliminated-tag">ELIMINATED</span>}
+                  </td>
                   <td>{entry.scoreDelta}</td>
                   <td>{entry.newScore}</td>
                 </tr>
@@ -128,6 +133,7 @@ export function HostRoom() {
           <h2>Final Results</h2>
           <p className="winner-announcement">{formatWinnerAnnouncement(getWinners(state.finalLeaderboard))}</p>
           <LeaderboardTable entries={state.finalLeaderboard} />
+          <PoweredByFooter />
         </section>
       )}
 

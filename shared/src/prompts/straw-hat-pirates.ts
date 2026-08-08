@@ -24,5 +24,5 @@ export const strawHatPirates: PromptDefinition = {
     Robin: 'Nico Robin',
     Jinbei: 'Jinbe',
   },
-  hostAnswer: 'Monkey D. Luffy',
+  hostAnswer: 'Roronoa Zoro',
 };

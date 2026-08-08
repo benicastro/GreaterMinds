@@ -4,6 +4,7 @@ export interface ScoredPlayer {
   playerId: string;
   nickname: string;
   score: number;
+  eliminated: boolean;
 }
 
 /**
@@ -21,7 +22,13 @@ export function computeLeaderboard(players: ScoredPlayer[]): LeaderboardEntry[] 
       rank = index + 1;
       previousScore = player.score;
     }
-    result.push({ playerId: player.playerId, nickname: player.nickname, score: player.score, rank });
+    result.push({
+      playerId: player.playerId,
+      nickname: player.nickname,
+      score: player.score,
+      rank,
+      eliminated: player.eliminated,
+    });
   });
 
   return result;

@@ -5,5 +5,5 @@ export const chessPiece: PromptDefinition = {
   category: 'Chess Piece',
   promptText: 'Name a chess piece.',
   canonicalAnswers: ['King', 'Queen', 'Rook', 'Bishop', 'Knight', 'Pawn'],
-  hostAnswer: 'Pawn',
+  hostAnswer: 'Knight',
 };

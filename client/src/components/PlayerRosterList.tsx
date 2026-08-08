@@ -10,7 +10,9 @@ export function PlayerRosterList({ players, answeredCount }: { players: PlayerSu
       <ul>
         {players.map((player) => (
           <li key={player.playerId} className={player.connected ? '' : 'disconnected'}>
-            {player.nickname} — {player.score} pts {player.connected ? '' : '(disconnected)'}
+            {player.eliminated ? <s>{player.nickname}</s> : player.nickname} — {player.score} pts{' '}
+            {player.eliminated && <span className="eliminated-tag">ELIMINATED</span>}
+            {!player.eliminated && !player.connected && '(disconnected)'}
           </li>
         ))}
       </ul>

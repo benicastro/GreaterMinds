@@ -21,5 +21,5 @@ export const canadianProvince: PromptDefinition = {
     PEI: 'Prince Edward Island',
   },
   rejections: ['Yukon', 'Northwest Territories', 'NWT', 'Nunavut'],
-  hostAnswer: 'Ontario',
+  hostAnswer: 'Alberta',
 };

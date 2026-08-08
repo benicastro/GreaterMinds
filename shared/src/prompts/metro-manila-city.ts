@@ -30,5 +30,5 @@ export const metroManilaCity: PromptDefinition = {
   },
   // Pateros is a municipality, not a city; Metro Manila/NCR are the region itself, not a city within it.
   rejections: ['Pateros', 'Metro Manila', 'NCR'],
-  hostAnswer: 'Manila',
+  hostAnswer: 'Quezon City',
 };

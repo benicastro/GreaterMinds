@@ -15,5 +15,5 @@ export const starterPokemon: PromptDefinition = {
     'Torchic',
     'Mudkip',
   ],
-  hostAnswer: 'Bulbasaur',
+  hostAnswer: 'Squirtle',
 };

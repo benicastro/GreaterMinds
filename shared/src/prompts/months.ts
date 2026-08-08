@@ -32,5 +32,5 @@ export const months: PromptDefinition = {
     Nov: 'November',
     Dec: 'December',
   },
-  hostAnswer: 'January',
+  hostAnswer: 'November',
 };

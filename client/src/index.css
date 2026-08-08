@@ -743,3 +743,48 @@ header {
     opacity: 0.5;
   }
 }
+
+/* ---- "Powered by" credit: landing page + final results footer ---- */
+
+.powered-by-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 40px;
+  color: var(--muted);
+}
+
+.powered-by-logo {
+  height: 20px;
+  width: auto;
+  opacity: 0.9;
+}
+
+.powered-by-primary {
+  font-size: 0.85rem;
+}
+
+/* ---- Hard elimination: score dropped below 0, out for the rest of the game ---- */
+
+.eliminated-tag {
+  display: inline-block;
+  font-size: 0.65em;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--invalid);
+  color: #14121a;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.eliminated-banner {
+  color: var(--invalid);
+  font-weight: 600;
+}
+
+.leaderboard tr.eliminated-row {
+  opacity: 0.55;
+}

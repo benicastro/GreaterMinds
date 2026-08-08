@@ -23,6 +23,9 @@ export function RevealCard({ entry }: { entry: RevealEntry }) {
           </>
         )}
       </p>
+      {entry.eliminated && (
+        <p className="eliminated-banner">☠️ Your score dropped below 0 — you're eliminated. You can keep watching!</p>
+      )}
     </div>
   );
 }

@@ -14,24 +14,38 @@ import { chessPiece } from './chess-piece.js';
 import { phVicePresidents } from './ph-vice-presidents.js';
 import { canadianProvince } from './canadian-province.js';
 import { aseanCountry } from './asean-country.js';
+import { phRegion } from './ph-region.js';
+import { harryPotterHouse } from './harry-potter-house.js';
+import { infinityStone } from './infinity-stone.js';
+import { cardSuit } from './card-suit.js';
+import { friendsCharacter } from './friends-character.js';
 
-/** All 15 prompts, in design-doc order. */
+/**
+ * All 20 prompts, ordered by number of accepted canonical answers, descending
+ * (ties broken by the original design-doc/addition order): ph-province (82) down to
+ * harry-potter-house / card-suit (4 each).
+ */
 export const PROMPT_REGISTRY: PromptDefinition[] = [
-  rainbowColor,
-  starterPokemon,
-  planets,
-  continents,
-  daysOfWeek,
-  months,
-  zodiacSigns,
-  number1To10,
-  metroManilaCity,
-  phProvince,
-  strawHatPirates,
-  chessPiece,
-  phVicePresidents,
-  canadianProvince,
-  aseanCountry,
+  phProvince, // 82
+  phRegion, // 17
+  metroManilaCity, // 16
+  months, // 12
+  zodiacSigns, // 12
+  phVicePresidents, // 12
+  number1To10, // 10
+  strawHatPirates, // 10
+  canadianProvince, // 10
+  aseanCountry, // 10
+  starterPokemon, // 9
+  planets, // 8
+  rainbowColor, // 7
+  continents, // 7
+  daysOfWeek, // 7
+  chessPiece, // 6
+  infinityStone, // 6
+  friendsCharacter, // 6
+  harryPotterHouse, // 4
+  cardSuit, // 4
 ];
 
 export const PROMPTS_BY_ID: Map<string, PromptDefinition> = new Map(
@@ -54,4 +68,9 @@ export {
   phVicePresidents,
   canadianProvince,
   aseanCountry,
+  phRegion,
+  harryPotterHouse,
+  infinityStone,
+  cardSuit,
+  friendsCharacter,
 };

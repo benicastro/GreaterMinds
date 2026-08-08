@@ -18,5 +18,5 @@ export const zodiacSigns: PromptDefinition = {
     'Aquarius',
     'Pisces',
   ],
-  hostAnswer: 'Aries',
+  hostAnswer: 'Scorpio',
 };

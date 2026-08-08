@@ -9,6 +9,7 @@ import { TimerBar } from '../../components/TimerBar';
 import { LeaderboardTable } from '../../components/LeaderboardTable';
 import { Confetti } from '../../components/Confetti';
 import { GetReadyScreen } from '../../components/GetReadyScreen';
+import { PoweredByFooter } from '../../components/PoweredByFooter';
 import { formatWinnerAnnouncement, getWinners } from '../../winnerAnnouncement';
 
 export function PlayerRoom() {
@@ -31,7 +32,9 @@ export function PlayerRoom() {
     <div className="player-room">
       <header>
         <h1>{state.nickname}</h1>
-        <p className="score-display">{state.score} pts</p>
+        <p className="score-display">
+          {state.score} pts {state.eliminated && <span className="eliminated-tag">ELIMINATED</span>}
+        </p>
       </header>
 
       {(state.status === 'lobby' || state.status === 'configuring') && <p>Waiting for the host to start the game…</p>}
@@ -43,7 +46,9 @@ export function PlayerRoom() {
           <h2>{state.currentRound.category}</h2>
           <p>{state.currentRound.promptText}</p>
           <TimerBar endsAt={state.currentRound.endsAt} durationSeconds={state.currentRound.durationSeconds} />
-          {state.hasAnsweredCurrentRound ? (
+          {state.eliminated ? (
+            <p className="eliminated-banner">You've been eliminated — spectating the rest of the game.</p>
+          ) : state.hasAnsweredCurrentRound ? (
             <p>Answer submitted. Waiting for the round to end…</p>
           ) : (
             <AnswerInput onSubmit={submitAnswer} disabled={false} />
@@ -51,21 +56,26 @@ export function PlayerRoom() {
         </section>
       )}
 
-      {state.status === 'reveal' && state.reveal && (
-        <>
-          <h2>{state.reveal.category}</h2>
-          <p className="prompt-reference">{state.reveal.promptText}</p>
-          <RevealCard entry={state.reveal.entry} />
+      {state.status === 'reveal' &&
+        (state.reveal ? (
+          <>
+            <h2>{state.reveal.category}</h2>
+            <p className="prompt-reference">{state.reveal.promptText}</p>
+            <RevealCard entry={state.reveal.entry} />
+            <section>
+              <h3>What Everyone Picked</h3>
+              <AnswerHistogram
+                perPlayer={state.reveal.perPlayer}
+                hostAnswer={state.reveal.hostAnswer}
+                selfPlayerId={state.playerId}
+              />
+            </section>
+          </>
+        ) : (
           <section>
-            <h3>What Everyone Picked</h3>
-            <AnswerHistogram
-              perPlayer={state.reveal.perPlayer}
-              hostAnswer={state.reveal.hostAnswer}
-              selfPlayerId={state.playerId}
-            />
+            <p className="eliminated-banner">You've been eliminated — spectating the rest of the game.</p>
           </section>
-        </>
-      )}
+        ))}
 
       {state.status === 'game_over' && state.finalLeaderboard && (
         <section>
@@ -75,6 +85,7 @@ export function PlayerRoom() {
             {formatWinnerAnnouncement(getWinners(state.finalLeaderboard), state.playerId)}
           </p>
           <LeaderboardTable entries={state.finalLeaderboard} />
+          <PoweredByFooter />
         </section>
       )}
 

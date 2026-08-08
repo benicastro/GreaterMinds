@@ -12,9 +12,15 @@ export function LeaderboardTable({ entries }: { entries: LeaderboardEntry[] }) {
       </thead>
       <tbody>
         {entries.map((entry) => (
-          <tr key={entry.playerId} className={entry.rank === 1 ? 'winner-row' : undefined}>
+          <tr
+            key={entry.playerId}
+            className={entry.rank === 1 ? 'winner-row' : entry.eliminated ? 'eliminated-row' : undefined}
+          >
             <td>{entry.rank === 1 ? '🏆' : entry.rank}</td>
-            <td>{entry.nickname}</td>
+            <td>
+              {entry.eliminated ? <s>{entry.nickname}</s> : entry.nickname}
+              {entry.eliminated && <span className="eliminated-tag">ELIMINATED</span>}
+            </td>
             <td>{entry.score}</td>
           </tr>
         ))}

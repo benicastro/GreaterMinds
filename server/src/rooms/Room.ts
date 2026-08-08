@@ -29,6 +29,7 @@ interface PlayerEntry {
   connected: boolean;
   disconnectedAt: number | null;
   score: number;
+  eliminated: boolean;
 }
 
 interface RoundAnswer {
@@ -104,6 +105,7 @@ export class Room {
       connected: false,
       disconnectedAt: null,
       score: STARTING_SCORE,
+      eliminated: false,
     });
     this.touch();
     this.onStateChange();
@@ -159,6 +161,13 @@ export class Room {
     const noConnectedPlayers = Array.from(this.players.values()).every((player) => !player.connected);
     const idleLongEnough = now - this.lastActivityAt > idleMs;
     return hostGoneLongEnough && noConnectedPlayers && idleLongEnough;
+  }
+
+  /** Players still in the running (hard elimination: out for good once their score goes negative). */
+  private activePlayerIds(): string[] {
+    return Array.from(this.players.values())
+      .filter((player) => !player.eliminated)
+      .map((player) => player.playerId);
   }
 
   // ---- pre-game configuration ----
@@ -225,7 +234,9 @@ export class Room {
   private advanceRound() {
     this.currentRoundIndex += 1;
 
-    if (this.currentRoundIndex >= this.selectedPromptIds.length) {
+    const outOfPrompts = this.currentRoundIndex >= this.selectedPromptIds.length;
+    const noOneLeft = this.activePlayerIds().length === 0;
+    if (outOfPrompts || noOneLeft) {
       this.status = 'game_over';
       this.currentRound = null;
       this.finalLeaderboard = this.buildFinalLeaderboard();
@@ -258,8 +269,12 @@ export class Room {
     if (this.status !== 'in_round' || !this.currentRound || this.currentRound.closing) {
       throw new GameError('ROUND_NOT_ACTIVE', 'No active round to answer.');
     }
-    if (!this.players.has(playerId)) {
+    const player = this.players.get(playerId);
+    if (!player) {
       throw new GameError('UNKNOWN_PLAYER', 'Unknown player.');
+    }
+    if (player.eliminated) {
+      throw new GameError('PLAYER_ELIMINATED', 'Eliminated players can no longer submit answers.');
     }
     if (this.currentRound.answers.has(playerId)) {
       return; // idempotent: first submission wins
@@ -277,7 +292,7 @@ export class Room {
     });
     this.touch();
 
-    if (this.currentRound.answers.size >= this.players.size) {
+    if (this.currentRound.answers.size >= this.activePlayerIds().length) {
       this.closeRound();
     } else {
       this.onStateChange();
@@ -302,13 +317,15 @@ export class Room {
       submissions.set(playerId, { raw: answer.raw, canonicalAnswer: answer.canonicalAnswer });
     }
 
-    const allPlayerIds = Array.from(this.players.keys());
+    const allPlayerIds = this.activePlayerIds();
     const outcomes = scoreRound(def.hostAnswer, allPlayerIds, submissions);
 
     const perPlayer = allPlayerIds.map((playerId) => {
       const player = this.players.get(playerId)!;
       const outcome: RoundOutcome = outcomes.get(playerId)!;
       player.score += outcome.scoreDelta;
+      const justEliminated = player.score < 0 && !player.eliminated;
+      if (justEliminated) player.eliminated = true;
       return {
         playerId,
         nickname: player.nickname,
@@ -318,6 +335,7 @@ export class Room {
         scoreDelta: outcome.scoreDelta,
         message: pickRevealMessage(outcome.outcome),
         newScore: player.score,
+        eliminated: justEliminated,
       };
     });
 
@@ -355,6 +373,7 @@ export class Room {
         playerId: player.playerId,
         nickname: player.nickname,
         score: player.score,
+        eliminated: player.eliminated,
       })),
     );
   }
@@ -388,6 +407,7 @@ export class Room {
         nickname: p.nickname,
         connected: p.connected,
         score: p.score,
+        eliminated: p.eliminated,
       })),
       selectedPromptIds: this.selectedPromptIds,
       timerDurationSeconds: this.timerDurationSeconds,
@@ -405,13 +425,10 @@ export class Room {
     const player = this.players.get(playerId);
     if (!player) throw new GameError('UNKNOWN_PLAYER', 'Unknown player.');
 
-    const reveal =
-      this.status === 'reveal' && this.lastReveal
-        ? {
-            ...this.lastReveal,
-            entry: this.lastReveal.perPlayer.find((entry) => entry.playerId === playerId)!,
-          }
-        : null;
+    // A player already eliminated before this round started has no entry in it (they're
+    // spectating) — only build a personal reveal payload when they actually took part.
+    const myEntry = this.lastReveal?.perPlayer.find((entry) => entry.playerId === playerId);
+    const reveal = this.status === 'reveal' && this.lastReveal && myEntry ? { ...this.lastReveal, entry: myEntry } : null;
 
     return {
       roomCode: this.roomCode,
@@ -419,6 +436,7 @@ export class Room {
       nickname: player.nickname,
       status: this.status,
       score: player.score,
+      eliminated: player.eliminated,
       currentRound: this.currentRound ? this.roundStartedPayload() : null,
       hasAnsweredCurrentRound: this.currentRound?.answers.has(playerId) ?? false,
       reveal,

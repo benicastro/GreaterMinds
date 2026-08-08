@@ -15,5 +15,5 @@ export const continents: PromptDefinition = {
   ],
   // Doc: "Optionally accept Oceania as an alias for Australia." Enabled by default.
   aliases: { Oceania: 'Australia' },
-  hostAnswer: 'Asia',
+  hostAnswer: 'Australia',
 };

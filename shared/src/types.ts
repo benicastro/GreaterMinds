@@ -32,6 +32,8 @@ export interface PlayerSummary {
   nickname: string;
   connected: boolean;
   score: number;
+  /** Hard elimination: true once their score has dropped below 0. They no longer answer rounds. */
+  eliminated: boolean;
 }
 
 export interface RoundStartedPayload {
@@ -53,6 +55,8 @@ export interface RevealEntry {
   scoreDelta: number;
   message: string;
   newScore: number;
+  /** True if this round's outcome is what dropped them below 0 (hard elimination). */
+  eliminated: boolean;
 }
 
 export interface RevealPayload {
@@ -74,6 +78,7 @@ export interface LeaderboardEntry {
   nickname: string;
   score: number;
   rank: number;
+  eliminated: boolean;
 }
 
 export interface HostStateSnapshot {
@@ -98,6 +103,7 @@ export interface PlayerStateSnapshot {
   nickname: string;
   status: RoomStatus;
   score: number;
+  eliminated: boolean;
   currentRound: RoundStartedPayload | null;
   hasAnsweredCurrentRound: boolean;
   reveal: PlayerRevealPayload | null;
