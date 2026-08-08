@@ -112,6 +112,13 @@ section {
   margin-top: 20px;
 }
 
+/* A button sitting directly after other section content (table, paragraph, etc.) needs its
+   own breathing room above it — flex-wrapped buttons (answer-input, landing-actions, ...) are
+   unaffected since they're nested inside a wrapper, not a direct child of the section. */
+section > button {
+  margin-top: 16px;
+}
+
 header {
   display: flex;
   align-items: center;
