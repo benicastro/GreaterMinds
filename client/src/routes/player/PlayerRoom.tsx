@@ -8,6 +8,7 @@ import { AnswerHistogram } from '../../components/AnswerHistogram';
 import { TimerBar } from '../../components/TimerBar';
 import { LeaderboardTable } from '../../components/LeaderboardTable';
 import { Confetti } from '../../components/Confetti';
+import { GetReadyScreen } from '../../components/GetReadyScreen';
 import { formatWinnerAnnouncement, getWinners } from '../../winnerAnnouncement';
 
 export function PlayerRoom() {
@@ -34,6 +35,8 @@ export function PlayerRoom() {
       </header>
 
       {(state.status === 'lobby' || state.status === 'configuring') && <p>Waiting for the host to start the game…</p>}
+
+      {state.status === 'starting' && <GetReadyScreen slideIndex={state.introSlideIndex ?? 0} />}
 
       {state.status === 'in_round' && state.currentRound && (
         <section>

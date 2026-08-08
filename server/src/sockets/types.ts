@@ -14,7 +14,10 @@ interface SuccessAck {
 }
 
 export interface ClientToServerEvents {
-  'host:createRoom': (payload: Record<string, never>, ack: (res: { roomCode: string; hostSessionToken: string }) => void) => void;
+  'host:createRoom': (
+    payload: { passcode?: string },
+    ack: (res: SuccessAck & { roomCode?: string; hostSessionToken?: string }) => void,
+  ) => void;
   'host:reconnect': (
     payload: { roomCode: string; hostSessionToken: string },
     ack: (res: SuccessAck & { hostState?: HostStateSnapshot }) => void,
@@ -30,6 +33,7 @@ export interface ClientToServerEvents {
   'host:updatePromptSelection': (payload: { promptIds: string[] }, ack: (res: SuccessAck) => void) => void;
   'host:updateTimerConfig': (payload: { seconds: number }, ack: (res: SuccessAck) => void) => void;
   'host:startGame': (payload: Record<string, never>, ack: (res: SuccessAck) => void) => void;
+  'host:advanceIntro': (payload: Record<string, never>, ack: (res: SuccessAck) => void) => void;
   'player:submitAnswer': (payload: { answer: string }, ack: (res: { received: boolean }) => void) => void;
   'host:forceCloseRound': (payload: Record<string, never>, ack: (res: SuccessAck) => void) => void;
   'host:nextRound': (payload: Record<string, never>, ack: (res: SuccessAck) => void) => void;
@@ -49,4 +53,6 @@ export type AppSocket = IOSocket<ClientToServerEvents, ServerToClientEvents, Rec
 export interface HandlerContext {
   io: AppServer;
   roomManager: RoomManager;
+  /** Required to create a room. Undefined means hosting is unrestricted (no passcode configured). */
+  hostPasscode: string | undefined;
 }

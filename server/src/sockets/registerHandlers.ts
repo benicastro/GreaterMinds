@@ -7,7 +7,8 @@ import type { AppServer, AppSocket, HandlerContext } from './types.js';
 
 export function registerSocketHandlers(io: AppServer) {
   const roomManager = new RoomManager((room) => broadcastRoomState(io, room));
-  const ctx: HandlerContext = { io, roomManager };
+  const hostPasscode = process.env.HOST_PASSCODE || undefined;
+  const ctx: HandlerContext = { io, roomManager, hostPasscode };
 
   io.on('connection', (socket: AppSocket) => {
     registerRoomHandlers(socket, ctx);

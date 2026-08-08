@@ -8,12 +8,23 @@ import { TimerBar } from '../../components/TimerBar';
 import { LeaderboardTable } from '../../components/LeaderboardTable';
 import { AnswerHistogram } from '../../components/AnswerHistogram';
 import { Confetti } from '../../components/Confetti';
+import { GetReadyScreen } from '../../components/GetReadyScreen';
 import { OUTCOME_ICON } from '../../outcomeMeta';
 import { formatWinnerAnnouncement, getWinners } from '../../winnerAnnouncement';
 
 export function HostRoom() {
-  const { roomCode, state, error, updatePromptSelection, updateTimerConfig, startGame, nextRound, forceCloseRound, endGame } =
-    useHost();
+  const {
+    roomCode,
+    state,
+    error,
+    updatePromptSelection,
+    updateTimerConfig,
+    startGame,
+    advanceIntro,
+    nextRound,
+    forceCloseRound,
+    endGame,
+  } = useHost();
 
   if (!roomCode || !state) {
     return (
@@ -58,6 +69,10 @@ export function HostRoom() {
             Start Game
           </button>
         </section>
+      )}
+
+      {state.status === 'starting' && (
+        <GetReadyScreen slideIndex={state.introSlideIndex ?? 0} onAdvance={advanceIntro} />
       )}
 
       {state.status === 'in_round' && state.currentRound && (

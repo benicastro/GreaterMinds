@@ -25,7 +25,7 @@ export interface PromptDefinition {
   validate?: (raw: string) => ValidationResult;
 }
 
-export type RoomStatus = 'lobby' | 'configuring' | 'in_round' | 'reveal' | 'game_over';
+export type RoomStatus = 'lobby' | 'configuring' | 'starting' | 'in_round' | 'reveal' | 'game_over';
 
 export interface PlayerSummary {
   playerId: string;
@@ -88,6 +88,8 @@ export interface HostStateSnapshot {
   answeredCount: number;
   reveal: RevealPayload | null;
   finalLeaderboard: LeaderboardEntry[] | null;
+  /** Which intro slide is showing, while status is 'starting'. Null otherwise. */
+  introSlideIndex: number | null;
 }
 
 export interface PlayerStateSnapshot {
@@ -100,6 +102,8 @@ export interface PlayerStateSnapshot {
   hasAnsweredCurrentRound: boolean;
   reveal: PlayerRevealPayload | null;
   finalLeaderboard: LeaderboardEntry[] | null;
+  /** Which intro slide is showing, while status is 'starting'. Null otherwise. */
+  introSlideIndex: number | null;
 }
 
 export interface ActionError {

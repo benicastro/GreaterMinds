@@ -1,25 +1,37 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { HostProvider, useHost } from '../../state/HostContext';
 
 function HostNewInner() {
-  const { roomCode, createRoom } = useHost();
+  const { roomCode, error, createRoom } = useHost();
   const navigate = useNavigate();
-  const hasRequestedRoom = useRef(false);
-
-  useEffect(() => {
-    // Guard against StrictMode's dev-only double-invoke, which would otherwise
-    // create two separate rooms and leave sessionStorage pointing at the wrong one.
-    if (hasRequestedRoom.current) return;
-    hasRequestedRoom.current = true;
-    createRoom();
-  }, [createRoom]);
+  const [passcode, setPasscode] = useState('');
 
   useEffect(() => {
     if (roomCode) navigate(`/host/${roomCode}`, { replace: true });
   }, [roomCode, navigate]);
 
-  return <p>Creating room…</p>;
+  function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    createRoom(passcode);
+  }
+
+  return (
+    <div className="host-new">
+      <h1>Host a Game</h1>
+      <form onSubmit={handleSubmit}>
+        <input
+          type="password"
+          value={passcode}
+          onChange={(event) => setPasscode(event.target.value)}
+          placeholder="Host passcode"
+          autoFocus
+        />
+        <button type="submit">Create Room</button>
+      </form>
+      {error && <p className="error">{error}</p>}
+    </div>
+  );
 }
 
 export function HostNew() {

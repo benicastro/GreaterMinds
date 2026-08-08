@@ -1,5 +1,6 @@
 import {
   HostStateSnapshot,
+  INTRO_SLIDE_COUNT,
   LeaderboardEntry,
   PlayerStateSnapshot,
   PROMPTS_BY_ID,
@@ -57,6 +58,7 @@ export class Room {
   selectedPromptIds: string[] = [];
   timerDurationSeconds = DEFAULT_TIMER_SECONDS;
   currentRoundIndex = -1;
+  introSlideIndex = 0;
   lastActivityAt = Date.now();
 
   private currentRound: CurrentRound | null = null;
@@ -199,8 +201,25 @@ export class Room {
     if (this.selectedPromptIds.length === 0) {
       throw new GameError('NO_PROMPTS_SELECTED', 'Select at least one prompt before starting.');
     }
+    this.status = 'starting';
+    this.introSlideIndex = 0;
     this.currentRoundIndex = -1;
-    this.advanceRound();
+    this.touch();
+    this.onStateChange();
+  }
+
+  /** Advances the shared intro slide shown on the starting screen, or begins round 1 from the last slide. */
+  advanceIntro() {
+    if (this.status !== 'starting') {
+      throw new GameError('NOT_STARTING', 'Can only advance the intro from the starting screen.');
+    }
+    if (this.introSlideIndex < INTRO_SLIDE_COUNT - 1) {
+      this.introSlideIndex += 1;
+      this.touch();
+      this.onStateChange();
+    } else {
+      this.advanceRound();
+    }
   }
 
   private advanceRound() {
@@ -378,6 +397,7 @@ export class Room {
       answeredCount: this.currentRound ? this.currentRound.answers.size : 0,
       reveal: this.status === 'reveal' ? this.lastReveal : null,
       finalLeaderboard: this.status === 'game_over' ? this.finalLeaderboard : null,
+      introSlideIndex: this.status === 'starting' ? this.introSlideIndex : null,
     };
   }
 
@@ -403,6 +423,7 @@ export class Room {
       hasAnsweredCurrentRound: this.currentRound?.answers.has(playerId) ?? false,
       reveal,
       finalLeaderboard: this.status === 'game_over' ? this.finalLeaderboard : null,
+      introSlideIndex: this.status === 'starting' ? this.introSlideIndex : null,
     };
   }
 }

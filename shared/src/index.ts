@@ -6,3 +6,4 @@ export * from './prompts/index.js';
 export * from './messages/revealMessages.js';
 export * from './messages/branding.js';
 export * from './leaderboard.js';
+export * from './introSlides.js';

@@ -19,10 +19,11 @@ interface HostContextValue {
   state: HostStateSnapshot | null;
   error: string | null;
   clearError: () => void;
-  createRoom: () => void;
+  createRoom: (passcode: string) => void;
   updatePromptSelection: (promptIds: string[]) => void;
   updateTimerConfig: (seconds: number) => void;
   startGame: () => void;
+  advanceIntro: () => void;
   nextRound: () => void;
   forceCloseRound: () => void;
   endGame: () => void;
@@ -82,11 +83,20 @@ export function HostProvider({ children, roomCodeFromRoute }: { children: ReactN
     });
   }, [roomCodeFromRoute, roomCode]);
 
-  const createRoom = useCallback(() => {
-    socket.emit(ClientEvents.HostCreateRoom, {}, (res: StoredHostSession) => {
-      sessionStorage.setItem(HOST_STORAGE_KEY, JSON.stringify(res));
-      setRoomCode(res.roomCode);
-    });
+  const createRoom = useCallback((passcode: string) => {
+    socket.emit(
+      ClientEvents.HostCreateRoom,
+      { passcode },
+      (res: SuccessAck & { roomCode?: string; hostSessionToken?: string }) => {
+        if (!res.success || !res.roomCode || !res.hostSessionToken) {
+          setError(res.error ?? 'Failed to create room.');
+          return;
+        }
+        const session: StoredHostSession = { roomCode: res.roomCode, hostSessionToken: res.hostSessionToken };
+        sessionStorage.setItem(HOST_STORAGE_KEY, JSON.stringify(session));
+        setRoomCode(session.roomCode);
+      },
+    );
   }, []);
 
   const ackHandler = useCallback((fallbackMessage: string) => {
@@ -113,6 +123,10 @@ export function HostProvider({ children, roomCodeFromRoute }: { children: ReactN
     socket.emit(ClientEvents.HostStartGame, {}, ackHandler('Failed to start game.'));
   }, [ackHandler]);
 
+  const advanceIntro = useCallback(() => {
+    socket.emit(ClientEvents.HostAdvanceIntro, {}, ackHandler('Failed to advance.'));
+  }, [ackHandler]);
+
   const nextRound = useCallback(() => {
     socket.emit(ClientEvents.HostNextRound, {}, ackHandler('Failed to advance round.'));
   }, [ackHandler]);
@@ -137,11 +151,25 @@ export function HostProvider({ children, roomCodeFromRoute }: { children: ReactN
       updatePromptSelection,
       updateTimerConfig,
       startGame,
+      advanceIntro,
       nextRound,
       forceCloseRound,
       endGame,
     }),
-    [roomCode, state, error, clearError, createRoom, updatePromptSelection, updateTimerConfig, startGame, nextRound, forceCloseRound, endGame],
+    [
+      roomCode,
+      state,
+      error,
+      clearError,
+      createRoom,
+      updatePromptSelection,
+      updateTimerConfig,
+      startGame,
+      advanceIntro,
+      nextRound,
+      forceCloseRound,
+      endGame,
+    ],
   );
 
   return <HostContext.Provider value={value}>{children}</HostContext.Provider>;

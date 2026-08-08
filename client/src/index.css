@@ -58,16 +58,6 @@ h3 {
   margin: 0 0 16px;
 }
 
-.tagline {
-  font-style: italic;
-  color: var(--muted);
-}
-
-.philosophy p {
-  margin: 4px 0;
-  color: var(--muted);
-}
-
 .landing {
   text-align: center;
   padding-top: 15vh;
@@ -293,7 +283,8 @@ header {
 
 .answer-input,
 .nickname-form,
-.join-room-entry form {
+.join-room-entry form,
+.host-new form {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
@@ -301,7 +292,8 @@ header {
 
 .answer-input input,
 .nickname-form input,
-.join-room-entry form input {
+.join-room-entry form input,
+.host-new form input {
   flex: 1;
   min-width: 0;
 }
@@ -695,4 +687,59 @@ header {
 }
 .histogram-row.outcome-timeout .histogram-bar-fill {
   background: var(--timeout);
+}
+
+/* ---- "Get Ready" interstitial: full-page title art, host advances manually ---- */
+
+.get-ready-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  background-color: #0c0f1f;
+}
+
+.get-ready-image-area {
+  flex: 1;
+  min-height: 0;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.get-ready-content {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+}
+
+.get-ready-caption {
+  margin: 0;
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.get-ready-caption-pulse {
+  animation: get-ready-pulse 1.2s ease-in-out infinite;
+}
+
+.get-ready-button {
+  font-size: 1.2rem;
+  padding: 14px 32px;
+}
+
+@keyframes get-ready-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }

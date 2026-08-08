@@ -7,6 +7,7 @@ export const ClientEvents = {
   HostUpdatePromptSelection: 'host:updatePromptSelection',
   HostUpdateTimerConfig: 'host:updateTimerConfig',
   HostStartGame: 'host:startGame',
+  HostAdvanceIntro: 'host:advanceIntro',
   PlayerSubmitAnswer: 'player:submitAnswer',
   HostForceCloseRound: 'host:forceCloseRound',
   HostNextRound: 'host:nextRound',

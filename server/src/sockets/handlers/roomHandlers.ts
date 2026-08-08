@@ -3,15 +3,19 @@ import type { AppSocket, HandlerContext } from '../types.js';
 import { currentRoom, errorMessage } from './util.js';
 
 export function registerRoomHandlers(socket: AppSocket, ctx: HandlerContext) {
-  const { roomManager } = ctx;
+  const { roomManager, hostPasscode } = ctx;
 
-  socket.on(ClientEvents.HostCreateRoom, (_payload, ack) => {
+  socket.on(ClientEvents.HostCreateRoom, ({ passcode }, ack) => {
+    if (hostPasscode && passcode !== hostPasscode) {
+      ack?.({ success: false, error: 'Incorrect host passcode.' });
+      return;
+    }
     const { room, hostSessionToken } = roomManager.createRoom();
     room.attachHostSocket(socket.id);
     socket.data.role = 'host';
     socket.data.roomCode = room.roomCode;
     socket.join(room.roomCode);
-    ack?.({ roomCode: room.roomCode, hostSessionToken });
+    ack?.({ success: true, roomCode: room.roomCode, hostSessionToken });
   });
 
   socket.on(ClientEvents.HostReconnect, ({ roomCode, hostSessionToken }, ack) => {

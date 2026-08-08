@@ -16,4 +16,8 @@ export function registerConfigHandlers(socket: AppSocket, ctx: HandlerContext) {
   socket.on(ClientEvents.HostStartGame, (_payload, ack) => {
     withHostRoom(socket, roomManager, ack, (room) => room.startGame());
   });
+
+  socket.on(ClientEvents.HostAdvanceIntro, (_payload, ack) => {
+    withHostRoom(socket, roomManager, ack, (room) => room.advanceIntro());
+  });
 }

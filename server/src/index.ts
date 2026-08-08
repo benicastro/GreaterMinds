@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { createServer } from 'node:http';
 import { Server } from 'socket.io';
 import { registerSocketHandlers } from './sockets/registerHandlers.js';
