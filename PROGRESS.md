@@ -150,6 +150,21 @@ the server; clients just render whatever snapshot they're sent.
   - Fixed by switching to `sessionStorage` (`HostContext.tsx`, `PlayerContext.tsx`), which is
     isolated per browser tab/window but still survives a refresh of that same tab — the actual
     behavior wanted, versus identity being shared across unrelated tabs.
+- **"Host a Game" intermittently failed with "No host session found for this room" right after
+  creation — reproducible on the live Render deployment, never locally.** Root cause: the server
+  (`roomHandlers.ts`) sends a `RoomHostState` broadcast the moment `attachHostSocket()` runs,
+  *before* it sends the `HostCreateRoom` ack response. The client's generic broadcast handler
+  (`onHostState`) was also calling `setRoomCode(snapshot.roomCode)`, so on a fast network the
+  broadcast could beat the ack, triggering navigation to `/host/:code` before the ack (which
+  carries the session token) had written anything to `sessionStorage`. The freshly-mounted
+  `HostProvider` at the new route checked storage immediately, found it empty, and permanently
+  set the error (its reconnect attempt is guarded to never retry). Locally the two messages
+  arrive close enough together to mask this; over Render's real network path the gap was wide
+  enough to lose the race reliably.
+  - Fixed by removing `setRoomCode` from the broadcast handler (`HostContext.tsx`) — `roomCode`
+    is now set *only* by the two explicit ack-driven paths (create, reconnect), both of which
+    already write `sessionStorage` first in the same synchronous callback, closing the race by
+    construction.
 
 ## Known gaps (flagged intentionally, not oversights)
 

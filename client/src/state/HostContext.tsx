@@ -40,7 +40,6 @@ export function HostProvider({ children, roomCodeFromRoute }: { children: ReactN
   useEffect(() => {
     function onHostState(snapshot: HostStateSnapshot) {
       setState(snapshot);
-      setRoomCode(snapshot.roomCode);
     }
     function onActionError(err: ActionError) {
       setError(err.message);
