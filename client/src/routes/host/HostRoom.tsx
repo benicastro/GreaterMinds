@@ -113,19 +113,21 @@ export function HostRoom() {
               </tr>
             </thead>
             <tbody>
-              {state.reveal.perPlayer.map((entry) => (
-                <tr key={entry.playerId} className={`outcome-${entry.outcome}`}>
-                  <td className="outcome-icon">{OUTCOME_ICON[entry.outcome]}</td>
-                  <td>{entry.nickname}</td>
-                  <td>{entry.rawAnswer ?? '(none)'}</td>
-                  <td>
-                    {entry.message}
-                    {entry.eliminated && <span className="eliminated-tag">ELIMINATED</span>}
-                  </td>
-                  <td>{entry.scoreDelta}</td>
-                  <td>{entry.newScore}</td>
-                </tr>
-              ))}
+              {[...state.reveal.perPlayer]
+                .sort((a, b) => b.newScore - a.newScore)
+                .map((entry) => (
+                  <tr key={entry.playerId} className={`outcome-${entry.outcome}`}>
+                    <td className="outcome-icon">{OUTCOME_ICON[entry.outcome]}</td>
+                    <td>{entry.nickname}</td>
+                    <td>{entry.rawAnswer ?? '(none)'}</td>
+                    <td>
+                      {entry.message}
+                      {entry.eliminated && <span className="eliminated-tag">ELIMINATED</span>}
+                    </td>
+                    <td>{entry.scoreDelta}</td>
+                    <td>{entry.newScore}</td>
+                  </tr>
+                ))}
             </tbody>
           </table>
           <button onClick={nextRound}>{isLastRound ? 'Show Final Results' : 'Next Round'}</button>
