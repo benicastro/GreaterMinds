@@ -7,7 +7,7 @@
   --accent-bg: rgba(181, 123, 255, 0.12);
   --unique: #4ade80;
   --player-match: #fbbf24;
-  --host-match: #f87171;
+  --host-match: #fb923c;
   --invalid: #f87171;
   --timeout: #94a3b8;
 
@@ -215,8 +215,8 @@ header {
 
 .prompt-remove {
   background: transparent;
-  border-color: var(--host-match);
-  color: var(--host-match);
+  border-color: var(--invalid);
+  color: var(--invalid);
 }
 
 .timer-config {
@@ -395,7 +395,7 @@ header {
 .reveal-card.outcome-host-match,
 .reveal-grid tr.outcome-host-match {
   border-color: var(--host-match);
-  background: rgba(248, 113, 113, 0.14);
+  background: rgba(251, 146, 60, 0.14);
 }
 
 .reveal-card.outcome-invalid,
@@ -431,7 +431,7 @@ header {
 }
 
 .error {
-  color: var(--host-match);
+  color: var(--invalid);
   font-weight: 600;
 }
 

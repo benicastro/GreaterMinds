@@ -96,6 +96,11 @@ the server; clients just render whatever snapshot they're sent.
   (`client/public/bp-logo.png`) on the Landing page and the Final Results screen only, kept off
   the busier gameplay screens. The company name itself is intentionally not shown as text (only
   in the logo's alt text for screen readers) per a later request to keep it purely evocative.
+- **`--host-match` given its own color** (`#fb923c`, orange) distinct from `--invalid`'s red,
+  so the two −2-penalty outcomes read apart on the histogram bars/reveal grid without relying on
+  icon or label. Two spots that had opportunistically reused `--host-match` as a generic "danger
+  red" (the `.error` text class and the prompt-picker's remove button) were repointed to
+  `--invalid` so they stayed red instead of turning orange.
 - **Hard elimination** — a player's score dropping below 0 eliminates them for the rest of the
   game: they stop being prompted for answers (server rejects submissions from them defensively
   too), they're excluded from the "how many have answered" count and from scoring/collisions in
@@ -139,9 +144,6 @@ the server; clients just render whatever snapshot they're sent.
 
 ## Known gaps (flagged intentionally, not oversights)
 
-- **`--host-match` and `--invalid` share the exact same red** in the color palette (predates
-  this round of polish). Differentiated today by icon/badge/label, not color alone, but a
-  distinct hue for host-match would read faster, especially on the histogram bars.
 - **No transitions between round states** — prompts, reveals, and rounds still snap in rather
   than fading/sliding, and there's no QR code for joining or sound cues on reveal (all discussed
   as nice-to-haves, not started).
@@ -165,6 +167,5 @@ is open to anyone.
 
 1. Keep playtesting in the browser and report anything that looks or feels off — hard
    elimination in particular is worth a real multi-player playtest to see how it feels.
-2. Give `--host-match` its own distinct color, separate from `--invalid`.
-3. Optional next round of polish: transitions between round states, a QR code for joining,
+2. Optional next round of polish: transitions between round states, a QR code for joining,
    sound cues on reveal, an accessibility pass (focus outlines, contrast, aria-labels).
