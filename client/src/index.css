@@ -21,6 +21,29 @@
   box-sizing: border-box;
 }
 
+/* Applied (with a `key` that changes per round/slide) to the top-level element of each
+   round-state screen, so switching states/rounds fades in instead of snapping. */
+@keyframes state-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.state-transition {
+  animation: state-fade-in 0.35s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .state-transition {
+    animation: none;
+  }
+}
+
 body {
   margin: 0;
 }

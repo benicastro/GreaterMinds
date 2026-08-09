@@ -37,12 +37,20 @@ export function PlayerRoom() {
         </p>
       </header>
 
-      {(state.status === 'lobby' || state.status === 'configuring') && <p>Waiting for the host to start the game…</p>}
+      {(state.status === 'lobby' || state.status === 'configuring') && (
+        <p className="state-transition">Waiting for the host to start the game…</p>
+      )}
 
-      {state.status === 'starting' && <GetReadyScreen slideIndex={state.introSlideIndex ?? 0} />}
+      {state.status === 'starting' && (
+        <GetReadyScreen
+          key={`starting-${state.introSlideIndex ?? 0}`}
+          slideIndex={state.introSlideIndex ?? 0}
+          className="state-transition"
+        />
+      )}
 
       {state.status === 'in_round' && state.currentRound && (
-        <section>
+        <section key={`round-${state.currentRound.roundNumber}`} className="state-transition">
           <h2>{state.currentRound.category}</h2>
           <p>{state.currentRound.promptText}</p>
           <TimerBar endsAt={state.currentRound.endsAt} durationSeconds={state.currentRound.durationSeconds} />
@@ -58,7 +66,7 @@ export function PlayerRoom() {
 
       {state.status === 'reveal' &&
         (state.reveal ? (
-          <>
+          <div key={`reveal-${state.reveal.promptId}`} className="state-transition">
             <h2>{state.reveal.category}</h2>
             <p className="prompt-reference">{state.reveal.promptText}</p>
             <RevealCard entry={state.reveal.entry} />
@@ -70,15 +78,15 @@ export function PlayerRoom() {
                 selfPlayerId={state.playerId}
               />
             </section>
-          </>
+          </div>
         ) : (
-          <section>
+          <section className="state-transition">
             <p className="eliminated-banner">You've been eliminated — spectating the rest of the game.</p>
           </section>
         ))}
 
       {state.status === 'game_over' && state.finalLeaderboard && (
-        <section>
+        <section className="state-transition">
           <Confetti />
           <h2>Final Results</h2>
           <p className="winner-announcement">

@@ -1,12 +1,20 @@
 const INTRO_SLIDES = ['/title-bg.png', '/infographic.png'];
 
-export function GetReadyScreen({ slideIndex, onAdvance }: { slideIndex: number; onAdvance?: () => void }) {
+export function GetReadyScreen({
+  slideIndex,
+  onAdvance,
+  className,
+}: {
+  slideIndex: number;
+  onAdvance?: () => void;
+  className?: string;
+}) {
   const isHost = Boolean(onAdvance);
   const isLastSlide = slideIndex >= INTRO_SLIDES.length - 1;
   const activeImage = INTRO_SLIDES[slideIndex] ?? INTRO_SLIDES[0];
 
   return (
-    <div className="get-ready-screen" role="status" aria-live="polite">
+    <div className={`get-ready-screen${className ? ` ${className}` : ''}`} role="status" aria-live="polite">
       <div className="get-ready-image-area" style={{ backgroundImage: `url(${activeImage})` }} />
       <div className="get-ready-content">
         {isHost ? (

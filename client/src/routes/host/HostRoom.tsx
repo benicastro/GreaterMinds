@@ -54,7 +54,7 @@ export function HostRoom() {
       {error && <p className="error">{error}</p>}
 
       {(state.status === 'lobby' || state.status === 'configuring') && (
-        <section>
+        <section className="state-transition">
           <PlayerRosterList players={state.players} />
           <PromptPicker selectedIds={state.selectedPromptIds} onChange={updatePromptSelection} />
           <label className="timer-config">
@@ -74,11 +74,16 @@ export function HostRoom() {
       )}
 
       {state.status === 'starting' && (
-        <GetReadyScreen slideIndex={state.introSlideIndex ?? 0} onAdvance={advanceIntro} />
+        <GetReadyScreen
+          key={`starting-${state.introSlideIndex ?? 0}`}
+          slideIndex={state.introSlideIndex ?? 0}
+          onAdvance={advanceIntro}
+          className="state-transition"
+        />
       )}
 
       {state.status === 'in_round' && state.currentRound && (
-        <section>
+        <section key={`round-${state.currentRound.roundNumber}`} className="state-transition">
           <h2>
             Round {state.currentRound.roundNumber} / {state.currentRound.totalRounds}: {state.currentRound.category}
           </h2>
@@ -92,7 +97,7 @@ export function HostRoom() {
       )}
 
       {state.status === 'reveal' && state.reveal && (
-        <section>
+        <section key={`reveal-${state.reveal.promptId}`} className="state-transition">
           <h2>{state.reveal.category}</h2>
           <p className="prompt-reference">{state.reveal.promptText}</p>
           <AnswerHistogram perPlayer={state.reveal.perPlayer} hostAnswer={state.reveal.hostAnswer} />
@@ -128,7 +133,7 @@ export function HostRoom() {
       )}
 
       {state.status === 'game_over' && state.finalLeaderboard && (
-        <section>
+        <section className="state-transition">
           <Confetti />
           <h2>Final Results</h2>
           <p className="winner-announcement">{formatWinnerAnnouncement(getWinners(state.finalLeaderboard))}</p>

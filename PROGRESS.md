@@ -101,6 +101,15 @@ the server; clients just render whatever snapshot they're sent.
   icon or label. Two spots that had opportunistically reused `--host-match` as a generic "danger
   red" (the `.error` text class and the prompt-picker's remove button) were repointed to
   `--invalid` so they stayed red instead of turning orange.
+- **Fade-in transitions between round states** — the get-ready slides, each round's question, each
+  round's reveal, and the final results screen all fade/slide in instead of snapping (CSS
+  `@keyframes`, `.state-transition` utility class in `index.css`, respects
+  `prefers-reduced-motion`). Screens that repeat with new content each time (the two get-ready
+  slides, each round, each reveal) are given a `key` that changes with the round/slide so React
+  remounts them and the animation re-fires, instead of just updating in place silently. Verified
+  by checking `element.getAnimations()` mid-flight through a full two-round game (host + player)
+  that the animation is actually `running` at every one of those ten transition points, not just
+  present in the stylesheet.
 - **Hard elimination** — a player's score dropping below 0 eliminates them for the rest of the
   game: they stop being prompted for answers (server rejects submissions from them defensively
   too), they're excluded from the "how many have answered" count and from scoring/collisions in
@@ -144,9 +153,9 @@ the server; clients just render whatever snapshot they're sent.
 
 ## Known gaps (flagged intentionally, not oversights)
 
-- **No transitions between round states** — prompts, reveals, and rounds still snap in rather
-  than fading/sliding, and there's no QR code for joining or sound cues on reveal (all discussed
-  as nice-to-haves, not started).
+- **No sound cues** — reveal/round transitions are silent; a bigger lift than it sounds since
+  browsers block autoplay-with-sound until the user has interacted with the page. Not started.
+- **No QR code for joining.** Not started.
 - **No automated browser/UI tests** — coverage today is the validation-engine, leaderboard, and
   scoring-adjacent unit tests plus scripted socket-level end-to-end tests; manual browser
   playtesting is how UI regressions get caught for now.
@@ -167,5 +176,5 @@ is open to anyone.
 
 1. Keep playtesting in the browser and report anything that looks or feels off — hard
    elimination in particular is worth a real multi-player playtest to see how it feels.
-2. Optional next round of polish: transitions between round states, a QR code for joining,
-   sound cues on reveal, an accessibility pass (focus outlines, contrast, aria-labels).
+2. Optional next round of polish: sound cues on reveal, a QR code for joining, an accessibility
+   pass (focus outlines, contrast, aria-labels).
