@@ -2,7 +2,7 @@
 
 ## Status: MVP playable end-to-end
 
-A full game (host + multiple players, 20 prompts, scoring, reveal, leaderboard) can be
+A full game (host + multiple players, 15 prompts, scoring, reveal, leaderboard) can be
 played in the browser today via `npm run dev`. See `Greater Minds Game Design.pdf` for the
 original design doc and `C:\Users\CanPhi2\.claude\plans\bubbly-stargazing-plum.md` for the
 build plan this was implemented against.
@@ -25,22 +25,28 @@ the server; clients just render whatever snapshot they're sent.
 
 ## What's implemented
 
-- **All 20 prompts** (`shared/src/prompts/*.ts`) — the original 15 from the design doc plus 5
-  backup prompts added later (Region of the Philippines, Harry Potter House, Infinity Stone,
-  Playing Card Suit, Friends Character), each with canonical answers, alias/abbreviation maps,
-  and explicit rejections where called for (Pluto; Pateros/Metro Manila/NCR; the Canadian
-  territories; ambiguous pre-split names like "Maguindanao," "Region 4," and "Geller" are
-  deliberately left unaliased rather than arbitrarily resolved). The number-1-10 prompt has the
-  one bit of custom logic in the whole bank (word-form parsing, integer/range check) — every
-  other prompt, including the ones that look tricky, is pure data on top of the generic
-  validation engine.
-- **Every prompt's `hostAnswer` is a deliberate, confirmed pick** (not a placeholder) — went
-  through all 20 one at a time and set real values.
-- **Philippine Province has the real official list** — all 82 provinces (post-2022 Maguindanao
-  del Norte/del Sur split), replacing an earlier 10-province stub, plus aliases for commonly
-  used renamed/legacy names (Compostela Valley, Western Samar, North Cotabato).
+- **All 15 prompts** (`shared/src/prompts/*.ts`) — replaced the original 20-prompt bank with a
+  new set: whole number 1–10, rainbow color, worst meeting day (a focal-point prompt — all seven
+  days are valid, the game never judges whether it's genuinely someone's least-favorite day),
+  delete a month, a letter appearing in "GREATER MINDS" (the 10 unique letters), a Solar System
+  planet (Pluto rejected), a Gen I–III starter Pokémon, a zodiac sign, a playing-card rank
+  (Ace/2–10/Jack/Queen/King with letter aliases A/J/Q/K, suits excluded), a tetromino (I/J/L/O/S/T/Z,
+  generic letter naming rather than any third-party branded piece names), a Metro Manila city,
+  a Canadian province (territories rejected), an ASEAN country (current 11-member roster,
+  including Timor-Leste), a Central Luzon province, and a Philippine province beginning with B.
+  Each keeps the same validation-engine shape as before: canonical answers, alias maps where
+  useful (month abbreviations, card-rank letters, ASEAN long-form names, Metro Manila city
+  shortcuts), and explicit rejections where called for. The number-1-10 prompt keeps the one bit
+  of custom logic in the whole bank (word-form parsing, integer/range check) — every other
+  prompt is pure data on top of the generic validation engine. The old region/pop-culture prompts
+  (Philippine Province, Region, Harry Potter House, Infinity Stone, Card Suit, Friends Character,
+  Straw Hat Pirates, Chess Piece, PH Vice Presidents, Continents, Days of the Week) and the
+  82-province `ph-provinces.ts` data file were removed along with them.
+- **`hostAnswer` for each new/changed prompt is a placeholder pick**, not yet confirmed with the
+  user the way the previous bank's answers were — e.g. Queen for playing-card rank, T for
+  tetromino, M for the GREATER MINDS letter. Worth a pass to sign off on real values.
 - **Validation engine** (`shared/src/validation/`) — normalize → compile → classify, with a
-  54-case Vitest suite covering aliases, rejections, case/diacritic handling, and every
+  48-case Vitest suite covering aliases, rejections, case/diacritic handling, and every
   prompt's `hostAnswer` round-tripping correctly.
 - **Scoring** (`server/src/game/scoring.ts`) — implements the doc's exact priority rule:
   timeout/invalid = −2, host-match = −2 (checked before player-match), player-match = −1,
@@ -128,6 +134,10 @@ the server; clients just render whatever snapshot they're sent.
   `socket.io-client`, not just unit tests) confirmed the full room→round→scoring→reveal→
   game-over loop, ties, the reconnect-after-refresh handshake, and the player-side reveal payload
   all work correctly before each was opened in a real browser.
+- **Question-set replacement verified**: full workspace build (`shared`/`server`/`client`) clean,
+  the rewritten Vitest suite passing, and the host's prompt picker checked live in a browser
+  (Playwright-driven) to confirm all 15 new rounds render in the right order with no console
+  errors.
 
 ## Bugs found and fixed during manual browser testing
 

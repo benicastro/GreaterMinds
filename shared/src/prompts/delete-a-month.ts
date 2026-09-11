@@ -1,9 +1,9 @@
 import { PromptDefinition } from '../types.js';
 
-export const months: PromptDefinition = {
-  id: 'months',
-  category: 'Months of the Year',
-  promptText: 'Name a month of the year.',
+export const deleteAMonth: PromptDefinition = {
+  id: 'delete-a-month',
+  category: 'Delete a Month',
+  promptText: 'Choose one month to erase from the calendar.',
   canonicalAnswers: [
     'January',
     'February',

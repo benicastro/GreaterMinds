@@ -3,7 +3,7 @@ import { PromptDefinition } from '../types.js';
 export const canadianProvince: PromptDefinition = {
   id: 'canadian-province',
   category: 'Canadian Province',
-  promptText: 'Name a Canadian province.',
+  promptText: 'Choose a Canadian province.',
   canonicalAnswers: [
     'Alberta',
     'British Columbia',

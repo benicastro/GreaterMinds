@@ -3,7 +3,7 @@ import { PromptDefinition } from '../types.js';
 export const zodiacSigns: PromptDefinition = {
   id: 'zodiac-signs',
   category: 'Zodiac Signs',
-  promptText: 'Name a zodiac sign.',
+  promptText: 'Choose a zodiac sign.',
   canonicalAnswers: [
     'Aries',
     'Taurus',

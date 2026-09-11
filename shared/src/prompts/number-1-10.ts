@@ -38,7 +38,7 @@ function validateNumber(raw: string): ValidationResult {
 
 export const number1To10: PromptDefinition = {
   id: 'number-1-10',
-  category: 'A Number from 1 to 10',
+  category: 'Whole Number',
   promptText: 'Pick a whole number from 1 to 10.',
   canonicalAnswers: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'],
   hostAnswer: '7',
