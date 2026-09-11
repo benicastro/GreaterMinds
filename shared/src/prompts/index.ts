@@ -15,23 +15,26 @@ import { aseanCountry } from './asean-country.js';
 import { centralLuzonProvince } from './central-luzon-province.js';
 import { phProvinceB } from './ph-province-b.js';
 
-/** All 15 prompts, in round order. */
+/**
+ * All 15 prompts, in round order — sorted by number of valid answers, descending, so the
+ * answer space gradually narrows over the game (better for spectator-friendly elimination play).
+ */
 export const PROMPT_REGISTRY: PromptDefinition[] = [
-  number1To10, // Round 1 — Whole Number
-  rainbowColor, // Round 2 — Rainbow Color
-  worstMeetingDay, // Round 3 — Worst Meeting Day
-  deleteAMonth, // Round 4 — Delete a Month
-  greaterMindsLetter, // Round 5 — GREATER MINDS Letter
-  planets, // Round 6 — Planet
-  starterPokemon, // Round 7 — Gen I–III Starter Pokémon
-  zodiacSigns, // Round 8 — Zodiac Sign
-  cardRank, // Round 9 — Playing-Card Rank
-  tetromino, // Round 10 — Tetromino
-  metroManilaCity, // Round 11 — Metro Manila City
-  canadianProvince, // Round 12 — Canadian Province
-  aseanCountry, // Round 13 — ASEAN Country
-  centralLuzonProvince, // Round 14 — Central Luzon Province
-  phProvinceB, // Round 15 — Philippine Province Beginning With B
+  metroManilaCity, // Round 1 — Metro Manila City (16)
+  cardRank, // Round 2 — Playing-Card Rank (13)
+  deleteAMonth, // Round 3 — Delete a Month (12)
+  zodiacSigns, // Round 4 — Zodiac Sign (12)
+  aseanCountry, // Round 5 — ASEAN Country (11)
+  number1To10, // Round 6 — Whole Number (10)
+  greaterMindsLetter, // Round 7 — GREATER MINDS Letter (10)
+  canadianProvince, // Round 8 — Canadian Province (10)
+  starterPokemon, // Round 9 — Gen I–III Starter Pokémon (9)
+  phProvinceB, // Round 10 — Philippine Province Beginning With B (9)
+  planets, // Round 11 — Planet (8)
+  rainbowColor, // Round 12 — Rainbow Color (7)
+  worstMeetingDay, // Round 13 — Worst Meeting Day (7)
+  centralLuzonProvince, // Round 14 — Central Luzon Province (7)
+  tetromino, // Round 15 — Tetromino (7)
 ];
 
 export const PROMPTS_BY_ID: Map<string, PromptDefinition> = new Map(
