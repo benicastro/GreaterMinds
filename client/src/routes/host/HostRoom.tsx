@@ -19,6 +19,7 @@ export function HostRoom() {
     state,
     error,
     updatePromptSelection,
+    setHostAnswer,
     updateTimerConfig,
     startGame,
     advanceIntro,
@@ -56,7 +57,12 @@ export function HostRoom() {
       {(state.status === 'lobby' || state.status === 'configuring') && (
         <section className="state-transition">
           <PlayerRosterList players={state.players} />
-          <PromptPicker selectedIds={state.selectedPromptIds} onChange={updatePromptSelection} />
+          <PromptPicker
+            selectedIds={state.selectedPromptIds}
+            onChange={updatePromptSelection}
+            hostAnswers={state.hostAnswers}
+            onHostAnswerChange={setHostAnswer}
+          />
           <label className="timer-config">
             Timer (seconds):
             <input

@@ -3,6 +3,7 @@ import {
   INTRO_SLIDE_COUNT,
   LeaderboardEntry,
   PlayerStateSnapshot,
+  PROMPT_REGISTRY,
   PROMPTS_BY_ID,
   RevealPayload,
   RoomStatus,
@@ -56,7 +57,9 @@ export class Room {
   hostConnected = false;
   hostDisconnectedAt: number | null = null;
   readonly players = new Map<string, PlayerEntry>();
-  selectedPromptIds: string[] = [];
+  selectedPromptIds: string[] = PROMPT_REGISTRY.map((prompt) => prompt.id);
+  /** Per-room host answer override for each prompt, defaulted from its definition. */
+  readonly hostAnswers = new Map<string, string>(PROMPT_REGISTRY.map((prompt) => [prompt.id, prompt.hostAnswer]));
   timerDurationSeconds = DEFAULT_TIMER_SECONDS;
   currentRoundIndex = -1;
   introSlideIndex = 0;
@@ -182,6 +185,20 @@ export class Room {
     }
     this.selectedPromptIds = unique;
     if (this.status === 'lobby') this.status = 'configuring';
+    this.touch();
+    this.onStateChange();
+  }
+
+  setHostAnswer(promptId: string, answer: string) {
+    this.assertNotStarted();
+    if (!PROMPTS_BY_ID.has(promptId)) {
+      throw new GameError('UNKNOWN_PROMPT', `Unknown prompt id: ${promptId}`);
+    }
+    const result = classifyAnswer(getCompiledPrompt(promptId), answer);
+    if (!result.valid || !result.canonicalAnswer) {
+      throw new GameError('INVALID_HOST_ANSWER', `"${answer}" is not a valid answer for this prompt.`);
+    }
+    this.hostAnswers.set(promptId, result.canonicalAnswer);
     this.touch();
     this.onStateChange();
   }
@@ -312,13 +329,14 @@ export class Room {
     if (this.currentRound.timeoutHandle) clearTimeout(this.currentRound.timeoutHandle);
 
     const def = PROMPTS_BY_ID.get(this.currentRound.promptId)!;
+    const hostAnswer = this.hostAnswers.get(def.id) ?? def.hostAnswer;
     const submissions = new Map<string, SubmissionRecord>();
     for (const [playerId, answer] of this.currentRound.answers) {
       submissions.set(playerId, { raw: answer.raw, canonicalAnswer: answer.canonicalAnswer });
     }
 
     const allPlayerIds = this.activePlayerIds();
-    const outcomes = scoreRound(def.hostAnswer, allPlayerIds, submissions);
+    const outcomes = scoreRound(hostAnswer, allPlayerIds, submissions);
 
     const perPlayer = allPlayerIds.map((playerId) => {
       const player = this.players.get(playerId)!;
@@ -343,7 +361,7 @@ export class Room {
       promptId: def.id,
       category: def.category,
       promptText: def.promptText,
-      hostAnswer: def.hostAnswer,
+      hostAnswer,
       perPlayer,
     };
     this.status = 'reveal';
@@ -410,6 +428,7 @@ export class Room {
         eliminated: p.eliminated,
       })),
       selectedPromptIds: this.selectedPromptIds,
+      hostAnswers: Object.fromEntries(this.hostAnswers),
       timerDurationSeconds: this.timerDurationSeconds,
       currentRoundNumber: this.currentRound?.roundNumber ?? null,
       totalRounds: this.selectedPromptIds.length,

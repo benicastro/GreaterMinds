@@ -21,6 +21,7 @@ interface HostContextValue {
   clearError: () => void;
   createRoom: (passcode: string) => void;
   updatePromptSelection: (promptIds: string[]) => void;
+  setHostAnswer: (promptId: string, answer: string) => void;
   updateTimerConfig: (seconds: number) => void;
   startGame: () => void;
   advanceIntro: () => void;
@@ -111,6 +112,13 @@ export function HostProvider({ children, roomCodeFromRoute }: { children: ReactN
     [ackHandler],
   );
 
+  const setHostAnswer = useCallback(
+    (promptId: string, answer: string) => {
+      socket.emit(ClientEvents.HostSetHostAnswer, { promptId, answer }, ackHandler('Failed to update host answer.'));
+    },
+    [ackHandler],
+  );
+
   const updateTimerConfig = useCallback(
     (seconds: number) => {
       socket.emit(ClientEvents.HostUpdateTimerConfig, { seconds }, ackHandler('Failed to update timer.'));
@@ -148,6 +156,7 @@ export function HostProvider({ children, roomCodeFromRoute }: { children: ReactN
       clearError,
       createRoom,
       updatePromptSelection,
+      setHostAnswer,
       updateTimerConfig,
       startGame,
       advanceIntro,
@@ -162,6 +171,7 @@ export function HostProvider({ children, roomCodeFromRoute }: { children: ReactN
       clearError,
       createRoom,
       updatePromptSelection,
+      setHostAnswer,
       updateTimerConfig,
       startGame,
       advanceIntro,

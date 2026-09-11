@@ -225,6 +225,20 @@ header {
   flex: 1;
 }
 
+.prompt-host-answer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.prompt-host-answer select {
+  font-size: 0.85rem;
+  padding: 2px 6px;
+}
+
 .prompt-row-actions {
   display: flex;
   gap: 4px;

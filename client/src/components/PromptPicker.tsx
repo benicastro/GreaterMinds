@@ -3,9 +3,11 @@ import { PROMPT_REGISTRY } from '@greater-minds/shared';
 interface PromptPickerProps {
   selectedIds: string[];
   onChange: (ids: string[]) => void;
+  hostAnswers: Record<string, string>;
+  onHostAnswerChange: (promptId: string, answer: string) => void;
 }
 
-export function PromptPicker({ selectedIds, onChange }: PromptPickerProps) {
+export function PromptPicker({ selectedIds, onChange, hostAnswers, onHostAnswerChange }: PromptPickerProps) {
   const selectedSet = new Set(selectedIds);
   const unselected = PROMPT_REGISTRY.filter((prompt) => !selectedSet.has(prompt.id));
 
@@ -37,6 +39,21 @@ export function PromptPicker({ selectedIds, onChange }: PromptPickerProps) {
             <li key={id} className="prompt-row prompt-row-selected">
               <span className="prompt-order">{index + 1}</span>
               <span className="prompt-name">{prompt?.category ?? id}</span>
+              {prompt && (
+                <label className="prompt-host-answer">
+                  Host's answer:
+                  <select
+                    value={hostAnswers[id] ?? prompt.hostAnswer}
+                    onChange={(event) => onHostAnswerChange(id, event.target.value)}
+                  >
+                    {prompt.canonicalAnswers.map((answer) => (
+                      <option key={answer} value={answer}>
+                        {answer}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
               <div className="prompt-row-actions">
                 <button type="button" onClick={() => move(id, -1)} disabled={index === 0} aria-label="Move up">
                   ↑

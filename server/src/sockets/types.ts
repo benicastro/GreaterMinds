@@ -31,6 +31,7 @@ export interface ClientToServerEvents {
     ack: (res: SuccessAck & { playerState?: PlayerStateSnapshot }) => void,
   ) => void;
   'host:updatePromptSelection': (payload: { promptIds: string[] }, ack: (res: SuccessAck) => void) => void;
+  'host:setHostAnswer': (payload: { promptId: string; answer: string }, ack: (res: SuccessAck) => void) => void;
   'host:updateTimerConfig': (payload: { seconds: number }, ack: (res: SuccessAck) => void) => void;
   'host:startGame': (payload: Record<string, never>, ack: (res: SuccessAck) => void) => void;
   'host:advanceIntro': (payload: Record<string, never>, ack: (res: SuccessAck) => void) => void;

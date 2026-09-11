@@ -9,6 +9,10 @@ export function registerConfigHandlers(socket: AppSocket, ctx: HandlerContext) {
     withHostRoom(socket, roomManager, ack, (room) => room.updatePromptSelection(promptIds));
   });
 
+  socket.on(ClientEvents.HostSetHostAnswer, ({ promptId, answer }, ack) => {
+    withHostRoom(socket, roomManager, ack, (room) => room.setHostAnswer(promptId, answer));
+  });
+
   socket.on(ClientEvents.HostUpdateTimerConfig, ({ seconds }, ack) => {
     withHostRoom(socket, roomManager, ack, (room) => room.updateTimerConfig(seconds));
   });

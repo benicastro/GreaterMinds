@@ -86,6 +86,8 @@ export interface HostStateSnapshot {
   status: RoomStatus;
   players: PlayerSummary[];
   selectedPromptIds: string[];
+  /** Current host answer for every registered prompt (id -> canonical answer), overridable per game. */
+  hostAnswers: Record<string, string>;
   timerDurationSeconds: number;
   currentRoundNumber: number | null;
   totalRounds: number;
