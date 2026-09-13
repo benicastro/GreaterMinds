@@ -165,6 +165,36 @@ describe('asean-country', () => {
   });
 });
 
+describe('taylor-swift-album', () => {
+  it('has all 11 studio albums', () => {
+    expect(PROMPTS_BY_ID.get('taylor-swift-album')!.canonicalAnswers.length).toBe(11);
+  });
+
+  it('accepts a canonical album title', () => {
+    expect(classify('taylor-swift-album', 'folklore')).toEqual({ valid: true, canonicalAnswer: 'Folklore' });
+  });
+
+  it('normalizes "(Taylor\'s Version)" re-recordings to the original studio album', () => {
+    expect(classify('taylor-swift-album', "1989 (Taylor's Version)")).toEqual({
+      valid: true,
+      canonicalAnswer: '1989',
+    });
+    expect(classify('taylor-swift-album', 'Red TV')).toEqual({ valid: true, canonicalAnswer: 'Red' });
+    expect(classify('taylor-swift-album', "Fearless (Taylor's Version)")).toEqual({
+      valid: true,
+      canonicalAnswer: 'Fearless',
+    });
+    expect(classify('taylor-swift-album', 'Speak Now (TV)')).toEqual({
+      valid: true,
+      canonicalAnswer: 'Speak Now',
+    });
+  });
+
+  it('rejects a non-album', () => {
+    expect(classify('taylor-swift-album', 'Cardigan')).toEqual({ valid: false });
+  });
+});
+
 describe('central-luzon-province', () => {
   it('has exactly the 7 Central Luzon provinces', () => {
     expect(PROMPTS_BY_ID.get('central-luzon-province')!.canonicalAnswers.length).toBe(7);

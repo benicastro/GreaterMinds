@@ -2,7 +2,7 @@
 
 ## Status: MVP playable end-to-end
 
-A full game (host + multiple players, 15 prompts, scoring, reveal, leaderboard) can be
+A full game (host + multiple players, 16 prompts, scoring, reveal, leaderboard) can be
 played in the browser today via `npm run dev`. See `Greater Minds Game Design.pdf` for the
 original design doc and `C:\Users\CanPhi2\.claude\plans\bubbly-stargazing-plum.md` for the
 build plan this was implemented against.
@@ -11,7 +11,7 @@ build plan this was implemented against.
 
 npm workspaces monorepo, TypeScript throughout:
 
-- **`shared/`** (`@greater-minds/shared`) — single source of truth for all 20 prompt
+- **`shared/`** (`@greater-minds/shared`) — single source of truth for all 16 prompt
   definitions, the answer-validation engine, Socket.IO event name constants, shared types,
   reveal messages, and branding strings. Imported by both `server` and `client` so prompt
   data and event contracts can't drift between them.
@@ -25,7 +25,7 @@ the server; clients just render whatever snapshot they're sent.
 
 ## What's implemented
 
-- **All 15 prompts** (`shared/src/prompts/*.ts`) — replaced the original 20-prompt bank with a
+- **All 16 prompts** (`shared/src/prompts/*.ts`) — replaced the original 20-prompt bank with a
   new set: whole number 1–10, rainbow color, worst meeting day (a focal-point prompt — all seven
   days are valid, the game never judges whether it's genuinely someone's least-favorite day),
   delete a month, a letter appearing in "GREATER MINDS" (the 10 unique letters), a Solar System
@@ -33,20 +33,39 @@ the server; clients just render whatever snapshot they're sent.
   (Ace/2–10/Jack/Queen/King with letter aliases A/J/Q/K, suits excluded), a tetromino (I/J/L/O/S/T/Z,
   generic letter naming rather than any third-party branded piece names), a Metro Manila city,
   a Canadian province (territories rejected), an ASEAN country (current 11-member roster,
-  including Timor-Leste), a Central Luzon province, and a Philippine province beginning with B.
-  Each keeps the same validation-engine shape as before: canonical answers, alias maps where
-  useful (month abbreviations, card-rank letters, ASEAN long-form names, Metro Manila city
-  shortcuts), and explicit rejections where called for. The number-1-10 prompt keeps the one bit
-  of custom logic in the whole bank (word-form parsing, integer/range check) — every other
-  prompt is pure data on top of the generic validation engine. The old region/pop-culture prompts
-  (Philippine Province, Region, Harry Potter House, Infinity Stone, Card Suit, Friends Character,
-  Straw Hat Pirates, Chess Piece, PH Vice Presidents, Continents, Days of the Week) and the
-  82-province `ph-provinces.ts` data file were removed along with them.
+  including Timor-Leste), a Central Luzon province, a Philippine province beginning with B, and a
+  Taylor Swift studio album (the four re-recorded "(Taylor's Version)" albums — Fearless, Speak
+  Now, Red, 1989 — plus their "TV" shorthand are aliased down to the original studio title rather
+  than accepted as separate answers, to keep the answer space clean). Each keeps the same
+  validation-engine shape as before: canonical answers, alias maps where useful (month
+  abbreviations, card-rank letters, ASEAN long-form names, Metro Manila city shortcuts, the
+  Taylor's-Version re-recording aliases), and explicit rejections where called for. The
+  number-1-10 prompt keeps the one bit of custom logic in the whole bank (word-form parsing,
+  integer/range check) — every other prompt is pure data on top of the generic validation engine.
+  The old region/pop-culture prompts (Philippine Province, Region, Harry Potter House, Infinity
+  Stone, Card Suit, Friends Character, Straw Hat Pirates, Chess Piece, PH Vice Presidents,
+  Continents, Days of the Week) and the 82-province `ph-provinces.ts` data file were removed
+  along with them.
+- **Default round order narrows the answer space** — `PROMPT_REGISTRY` is sorted by number of
+  valid answers, descending (Metro Manila City's 16 down to a four-way tie at 7), so spectator-
+  friendly elimination play gets progressively harder as the game goes on. All prompts are also
+  pre-selected by default when a room is created (`Room.ts`'s `selectedPromptIds` now defaults to
+  the full registry instead of an empty array) — the host trims/reorders from a full list rather
+  than building one up from scratch.
+- **Host's answer is dynamically editable per room** — the prompt picker shows a dropdown next to
+  each selected round ("Host's answer: ___") populated from that prompt's own canonical answers.
+  Changing it calls a new `host:setHostAnswer` socket event that validates the pick through the
+  same validation engine and stores it in a per-`Room` `hostAnswers` map, which scoring and the
+  reveal payload read from instead of the prompt definition's static `hostAnswer`. This only
+  overrides the current room — a new room resets to each prompt's default. Verified live: changed
+  a round's host answer via the dropdown, played it out, and confirmed both the reveal's
+  displayed "Host's Answer" and the scoring outcome used the overridden value.
 - **`hostAnswer` for each new/changed prompt is a placeholder pick**, not yet confirmed with the
   user the way the previous bank's answers were — e.g. Queen for playing-card rank, T for
-  tetromino, M for the GREATER MINDS letter. Worth a pass to sign off on real values.
+  tetromino, M for the GREATER MINDS letter, 1989 for Taylor Swift album. Worth a pass to sign off
+  on real values (though now overridable per game anyway via the host-answer dropdown above).
 - **Validation engine** (`shared/src/validation/`) — normalize → compile → classify, with a
-  48-case Vitest suite covering aliases, rejections, case/diacritic handling, and every
+  53-case Vitest suite covering aliases, rejections, case/diacritic handling, and every
   prompt's `hostAnswer` round-tripping correctly.
 - **Scoring** (`server/src/game/scoring.ts`) — implements the doc's exact priority rule:
   timeout/invalid = −2, host-match = −2 (checked before player-match), player-match = −1,
@@ -136,8 +155,11 @@ the server; clients just render whatever snapshot they're sent.
   all work correctly before each was opened in a real browser.
 - **Question-set replacement verified**: full workspace build (`shared`/`server`/`client`) clean,
   the rewritten Vitest suite passing, and the host's prompt picker checked live in a browser
-  (Playwright-driven) to confirm all 15 new rounds render in the right order with no console
-  errors.
+  (Playwright-driven) to confirm all rounds render in the right order with no console errors —
+  re-verified after the default-order change and again after adding the Taylor Swift prompt
+  (16 rounds total). The Taylor's-Version alias normalization was also checked end-to-end: a
+  simulated player answered `"1989 (Taylor's Version)"`, the server normalized it to `"1989"`,
+  and it scored correctly as a host-match against the host's answer.
 
 ## Bugs found and fixed during manual browser testing
 
