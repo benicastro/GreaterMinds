@@ -13,6 +13,10 @@ export function registerConfigHandlers(socket: AppSocket, ctx: HandlerContext) {
     withHostRoom(socket, roomManager, ack, (room) => room.setHostAnswer(promptId, answer));
   });
 
+  socket.on(ClientEvents.HostSetRoundSelectionMode, ({ mode }, ack) => {
+    withHostRoom(socket, roomManager, ack, (room) => room.setRoundSelectionMode(mode));
+  });
+
   socket.on(ClientEvents.HostUpdateTimerConfig, ({ seconds }, ack) => {
     withHostRoom(socket, roomManager, ack, (room) => room.updateTimerConfig(seconds));
   });

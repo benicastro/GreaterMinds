@@ -27,6 +27,14 @@ export interface PromptDefinition {
 
 export type RoomStatus = 'lobby' | 'configuring' | 'starting' | 'in_round' | 'reveal' | 'game_over';
 
+/**
+ * How the next round's prompt is chosen. 'adaptive' (the default) draws whichever unplayed
+ * selected prompt's valid-answer count best matches the current active player count, narrowing
+ * as the field shrinks. 'fixed' plays the host's selected prompts in the exact order shown in
+ * the picker, top to bottom, like a traditional round order.
+ */
+export type RoundSelectionMode = 'adaptive' | 'fixed';
+
 export interface PlayerSummary {
   playerId: string;
   nickname: string;
@@ -88,6 +96,7 @@ export interface HostStateSnapshot {
   selectedPromptIds: string[];
   /** Current host answer for every registered prompt (id -> canonical answer), overridable per game. */
   hostAnswers: Record<string, string>;
+  roundSelectionMode: RoundSelectionMode;
   timerDurationSeconds: number;
   currentRoundNumber: number | null;
   totalRounds: number;

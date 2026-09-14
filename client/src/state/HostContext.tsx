@@ -1,5 +1,11 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { ClientEvents, ServerEvents, type ActionError, type HostStateSnapshot } from '@greater-minds/shared';
+import {
+  ClientEvents,
+  ServerEvents,
+  type ActionError,
+  type HostStateSnapshot,
+  type RoundSelectionMode,
+} from '@greater-minds/shared';
 import { socket } from '../socket';
 
 const HOST_STORAGE_KEY = 'greaterMinds.host';
@@ -22,6 +28,7 @@ interface HostContextValue {
   createRoom: (passcode: string) => void;
   updatePromptSelection: (promptIds: string[]) => void;
   setHostAnswer: (promptId: string, answer: string) => void;
+  setRoundSelectionMode: (mode: RoundSelectionMode) => void;
   updateTimerConfig: (seconds: number) => void;
   startGame: () => void;
   advanceIntro: () => void;
@@ -119,6 +126,13 @@ export function HostProvider({ children, roomCodeFromRoute }: { children: ReactN
     [ackHandler],
   );
 
+  const setRoundSelectionMode = useCallback(
+    (mode: RoundSelectionMode) => {
+      socket.emit(ClientEvents.HostSetRoundSelectionMode, { mode }, ackHandler('Failed to update round order mode.'));
+    },
+    [ackHandler],
+  );
+
   const updateTimerConfig = useCallback(
     (seconds: number) => {
       socket.emit(ClientEvents.HostUpdateTimerConfig, { seconds }, ackHandler('Failed to update timer.'));
@@ -157,6 +171,7 @@ export function HostProvider({ children, roomCodeFromRoute }: { children: ReactN
       createRoom,
       updatePromptSelection,
       setHostAnswer,
+      setRoundSelectionMode,
       updateTimerConfig,
       startGame,
       advanceIntro,
@@ -172,6 +187,7 @@ export function HostProvider({ children, roomCodeFromRoute }: { children: ReactN
       createRoom,
       updatePromptSelection,
       setHostAnswer,
+      setRoundSelectionMode,
       updateTimerConfig,
       startGame,
       advanceIntro,

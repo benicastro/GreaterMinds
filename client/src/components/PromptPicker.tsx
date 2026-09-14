@@ -1,13 +1,20 @@
-import { PROMPT_REGISTRY } from '@greater-minds/shared';
+import { PROMPT_REGISTRY, type RoundSelectionMode } from '@greater-minds/shared';
 
 interface PromptPickerProps {
   selectedIds: string[];
   onChange: (ids: string[]) => void;
   hostAnswers: Record<string, string>;
   onHostAnswerChange: (promptId: string, answer: string) => void;
+  roundSelectionMode: RoundSelectionMode;
 }
 
-export function PromptPicker({ selectedIds, onChange, hostAnswers, onHostAnswerChange }: PromptPickerProps) {
+export function PromptPicker({
+  selectedIds,
+  onChange,
+  hostAnswers,
+  onHostAnswerChange,
+  roundSelectionMode,
+}: PromptPickerProps) {
   const selectedSet = new Set(selectedIds);
   const unselected = PROMPT_REGISTRY.filter((prompt) => !selectedSet.has(prompt.id));
 
@@ -30,13 +37,18 @@ export function PromptPicker({ selectedIds, onChange, hostAnswers, onHostAnswerC
 
   return (
     <div className="prompt-picker">
-      <h3>Selected Prompts ({selectedIds.length} selected)</h3>
+      <h3>{roundSelectionMode === 'fixed' ? 'Round Order' : 'Selected Prompts'} ({selectedIds.length} selected)</h3>
       {selectedIds.length === 0 && <p className="prompt-empty-hint">Add prompts below to build the pool.</p>}
-      {selectedIds.length > 0 && (
+      {selectedIds.length > 0 && roundSelectionMode === 'adaptive' && (
         <p className="prompt-empty-hint">
           Rounds are drawn automatically as the game goes — whichever selected prompt's answer
           count best matches how many players are still active, so the field gets tighter as
           players are eliminated. The order below only breaks ties between equally-tight prompts.
+        </p>
+      )}
+      {selectedIds.length > 0 && roundSelectionMode === 'fixed' && (
+        <p className="prompt-empty-hint">
+          Rounds play in exactly this order, top to bottom — use ↑/↓ to rearrange.
         </p>
       )}
       <ol className="prompt-list">

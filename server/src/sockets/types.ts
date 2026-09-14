@@ -1,5 +1,5 @@
 import type { Server as IOServer, Socket as IOSocket } from 'socket.io';
-import type { ActionError, HostStateSnapshot, PlayerStateSnapshot } from '@greater-minds/shared';
+import type { ActionError, HostStateSnapshot, PlayerStateSnapshot, RoundSelectionMode } from '@greater-minds/shared';
 import type { RoomManager } from '../rooms/RoomManager.js';
 import type { RateLimiter } from '../utils/rateLimiter.js';
 
@@ -33,6 +33,7 @@ export interface ClientToServerEvents {
   ) => void;
   'host:updatePromptSelection': (payload: { promptIds: string[] }, ack: (res: SuccessAck) => void) => void;
   'host:setHostAnswer': (payload: { promptId: string; answer: string }, ack: (res: SuccessAck) => void) => void;
+  'host:setRoundSelectionMode': (payload: { mode: RoundSelectionMode }, ack: (res: SuccessAck) => void) => void;
   'host:updateTimerConfig': (payload: { seconds: number }, ack: (res: SuccessAck) => void) => void;
   'host:startGame': (payload: Record<string, never>, ack: (res: SuccessAck) => void) => void;
   'host:advanceIntro': (payload: Record<string, never>, ack: (res: SuccessAck) => void) => void;

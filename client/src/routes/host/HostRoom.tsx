@@ -20,6 +20,7 @@ export function HostRoom() {
     error,
     updatePromptSelection,
     setHostAnswer,
+    setRoundSelectionMode,
     updateTimerConfig,
     startGame,
     advanceIntro,
@@ -57,11 +58,34 @@ export function HostRoom() {
       {(state.status === 'lobby' || state.status === 'configuring') && (
         <section className="state-transition">
           <PlayerRosterList players={state.players} />
+          <fieldset className="round-selection-mode">
+            <legend>Round Order</legend>
+            <label>
+              <input
+                type="radio"
+                name="roundSelectionMode"
+                checked={state.roundSelectionMode === 'adaptive'}
+                onChange={() => setRoundSelectionMode('adaptive')}
+              />
+              Adaptive — each round is picked to match how many players are still active, so the
+              game narrows as people are eliminated
+            </label>
+            <label>
+              <input
+                type="radio"
+                name="roundSelectionMode"
+                checked={state.roundSelectionMode === 'fixed'}
+                onChange={() => setRoundSelectionMode('fixed')}
+              />
+              Fixed — play the list below in exactly this order
+            </label>
+          </fieldset>
           <PromptPicker
             selectedIds={state.selectedPromptIds}
             onChange={updatePromptSelection}
             hostAnswers={state.hostAnswers}
             onHostAnswerChange={setHostAnswer}
+            roundSelectionMode={state.roundSelectionMode}
           />
           <label className="timer-config">
             Timer (seconds):

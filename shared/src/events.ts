@@ -6,6 +6,7 @@ export const ClientEvents = {
   PlayerReconnect: 'player:reconnect',
   HostUpdatePromptSelection: 'host:updatePromptSelection',
   HostSetHostAnswer: 'host:setHostAnswer',
+  HostSetRoundSelectionMode: 'host:setRoundSelectionMode',
   HostUpdateTimerConfig: 'host:updateTimerConfig',
   HostStartGame: 'host:startGame',
   HostAdvanceIntro: 'host:advanceIntro',

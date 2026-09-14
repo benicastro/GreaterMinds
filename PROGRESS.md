@@ -155,6 +155,20 @@ the server; clients just render whatever snapshot they're sent.
   with Chess Piece (6 answers) landing at 6 active players and Compass Direction / Season (4 each)
   landing at 5 and 4 active players respectively — confirming the small late-game prompts added
   for this purpose actually get selected for the last rounds, not just in theory.
+- **Round order is now a host-configurable toggle**, not adaptive-only — a "Round Order" fieldset
+  in the lobby (`HostRoom.tsx`, backed by `Room.roundSelectionMode` and a new
+  `host:setRoundSelectionMode` socket event) lets the host pick **Adaptive** (the behavior above,
+  and still the default) or **Fixed** (plays the selected prompts in exactly the order shown,
+  top to bottom, like the original pre-adaptive design). `advanceRound()` branches on the mode:
+  fixed walks `selectedPromptIds` by index the way it used to, adaptive still draws from
+  `remainingPromptIds` via `pickNextPromptId`. `PromptPicker`'s heading and hint copy switch
+  between the two ("Selected Prompts" + tie-break note vs. "Round Order" + "plays in exactly this
+  order") so the list means what it says regardless of mode. Verified live: a `socket.io-client`
+  script set a deliberately "wrong" fixed order (Tetromino → Metro Manila City → Card Rank, i.e.
+  smallest-answer-count prompt first) with 10 active players — a case adaptive mode would never
+  produce — and the game played that exact sequence, confirming fixed mode truly ignores player
+  count; a Playwright pass confirmed the toggle itself switches the picker's heading/hint text in
+  the browser.
 - **Hard elimination** — a player's score dropping below 0 eliminates them for the rest of the
   game: they stop being prompted for answers (server rejects submissions from them defensively
   too), they're excluded from the "how many have answered" count and from scoring/collisions in

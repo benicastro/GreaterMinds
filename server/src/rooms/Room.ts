@@ -7,6 +7,7 @@ import {
   PROMPTS_BY_ID,
   RevealPayload,
   RoomStatus,
+  RoundSelectionMode,
   RoundStartedPayload,
   classifyAnswer,
   computeLeaderboard,
@@ -66,6 +67,7 @@ export class Room {
    * space narrows as the active field shrinks. Populated from `selectedPromptIds` on `startGame`.
    */
   private remainingPromptIds: string[] = [];
+  roundSelectionMode: RoundSelectionMode = 'adaptive';
   timerDurationSeconds = DEFAULT_TIMER_SECONDS;
   currentRoundIndex = -1;
   introSlideIndex = 0;
@@ -209,6 +211,17 @@ export class Room {
     this.onStateChange();
   }
 
+  setRoundSelectionMode(mode: RoundSelectionMode) {
+    this.assertNotStarted();
+    if (mode !== 'adaptive' && mode !== 'fixed') {
+      throw new GameError('INVALID_ROUND_SELECTION_MODE', `Unknown round selection mode: ${mode}`);
+    }
+    this.roundSelectionMode = mode;
+    if (this.status === 'lobby') this.status = 'configuring';
+    this.touch();
+    this.onStateChange();
+  }
+
   updateTimerConfig(seconds: number) {
     this.assertNotStarted();
     if (!Number.isFinite(seconds)) {
@@ -258,7 +271,10 @@ export class Room {
   private advanceRound() {
     this.currentRoundIndex += 1;
 
-    const outOfPrompts = this.remainingPromptIds.length === 0;
+    const outOfPrompts =
+      this.roundSelectionMode === 'fixed'
+        ? this.currentRoundIndex >= this.selectedPromptIds.length
+        : this.remainingPromptIds.length === 0;
     const noOneLeft = this.activePlayerIds().length === 0;
     if (outOfPrompts || noOneLeft) {
       this.status = 'game_over';
@@ -269,7 +285,8 @@ export class Room {
       return;
     }
 
-    const promptId = this.pickNextPromptId();
+    const promptId =
+      this.roundSelectionMode === 'fixed' ? this.selectedPromptIds[this.currentRoundIndex] : this.pickNextPromptId();
     const startedAt = Date.now();
     const endsAt = startedAt + this.timerDurationSeconds * 1000;
     const timeoutHandle = setTimeout(() => this.closeRound(), this.timerDurationSeconds * 1000);
@@ -290,10 +307,10 @@ export class Room {
   }
 
   /**
-   * Draws the next round's prompt from `remainingPromptIds`, picking whichever remaining prompt's
-   * valid-answer count is closest to the number of players still active — so as eliminations
-   * shrink the field, the game reaches for tighter (fewer-answer) prompts sooner. Ties keep the
-   * host's original selection order.
+   * Used when `roundSelectionMode` is 'adaptive'. Draws the next round's prompt from
+   * `remainingPromptIds`, picking whichever remaining prompt's valid-answer count is closest to
+   * the number of players still active — so as eliminations shrink the field, the game reaches
+   * for tighter (fewer-answer) prompts sooner. Ties keep the host's original selection order.
    */
   private pickNextPromptId(): string {
     const activeCount = this.activePlayerIds().length;
@@ -457,6 +474,7 @@ export class Room {
       })),
       selectedPromptIds: this.selectedPromptIds,
       hostAnswers: Object.fromEntries(this.hostAnswers),
+      roundSelectionMode: this.roundSelectionMode,
       timerDurationSeconds: this.timerDurationSeconds,
       currentRoundNumber: this.currentRound?.roundNumber ?? null,
       totalRounds: this.selectedPromptIds.length,
