@@ -5,5 +5,8 @@ export const rainbowColor: PromptDefinition = {
   category: 'Rainbow Color',
   promptText: 'Choose a rainbow color.',
   canonicalAnswers: ['Red', 'Orange', 'Yellow', 'Green', 'Blue', 'Indigo', 'Violet'],
+  aliases: {
+    Purple: 'Violet',
+  },
   hostAnswer: 'Red',
 };

@@ -27,6 +27,23 @@ export const metroManilaCity: PromptDefinition = {
     'Q.C.': 'Quezon City',
     'Las Pinas': 'Las Piñas',
     Paranaque: 'Parañaque',
+    // Most of these cities are also commonly called "<Name> City" (Quezon City already has
+    // "City" baked into its canonical name, so it needs no alias here).
+    'Caloocan City': 'Caloocan',
+    'Las Piñas City': 'Las Piñas',
+    'Makati City': 'Makati',
+    'Malabon City': 'Malabon',
+    'Mandaluyong City': 'Mandaluyong',
+    'Manila City': 'Manila',
+    'Marikina City': 'Marikina',
+    'Muntinlupa City': 'Muntinlupa',
+    'Navotas City': 'Navotas',
+    'Parañaque City': 'Parañaque',
+    'Pasay City': 'Pasay',
+    'Pasig City': 'Pasig',
+    'San Juan City': 'San Juan',
+    'Taguig City': 'Taguig',
+    'Valenzuela City': 'Valenzuela',
   },
   // Pateros is a municipality, not a city; Metro Manila/NCR are the region itself, not a city within it.
   rejections: ['Pateros', 'Metro Manila', 'NCR'],

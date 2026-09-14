@@ -23,6 +23,7 @@ export const aseanCountry: PromptDefinition = {
     'Lao PDR': 'Laos',
     'Viet Nam': 'Vietnam',
     'East Timor': 'Timor-Leste',
+    Burma: 'Myanmar',
   },
   hostAnswer: 'Philippines',
 };

@@ -36,6 +36,10 @@ describe('rainbow-color', () => {
   it('rejects empty input', () => {
     expect(classify('rainbow-color', '   ')).toEqual({ valid: false });
   });
+
+  it('accepts "Purple" as an alias for Violet', () => {
+    expect(classify('rainbow-color', 'purple')).toEqual({ valid: true, canonicalAnswer: 'Violet' });
+  });
 });
 
 describe('worst-meeting-day', () => {
@@ -47,6 +51,12 @@ describe('worst-meeting-day', () => {
 
   it('rejects a non-day', () => {
     expect(classify('worst-meeting-day', 'Someday')).toEqual({ valid: false });
+  });
+
+  it('accepts common day abbreviations', () => {
+    expect(classify('worst-meeting-day', 'Mon')).toEqual({ valid: true, canonicalAnswer: 'Monday' });
+    expect(classify('worst-meeting-day', 'Tues')).toEqual({ valid: true, canonicalAnswer: 'Tuesday' });
+    expect(classify('worst-meeting-day', 'Thu')).toEqual({ valid: true, canonicalAnswer: 'Thursday' });
   });
 });
 
@@ -105,6 +115,11 @@ describe('card-rank', () => {
     expect(classify('card-rank', '10')).toEqual({ valid: true, canonicalAnswer: '10' });
   });
 
+  it('accepts spelled-out number words', () => {
+    expect(classify('card-rank', 'ten')).toEqual({ valid: true, canonicalAnswer: '10' });
+    expect(classify('card-rank', 'Seven')).toEqual({ valid: true, canonicalAnswer: '7' });
+  });
+
   it('rejects a suit', () => {
     expect(classify('card-rank', 'Spades')).toEqual({ valid: false });
   });
@@ -134,6 +149,13 @@ describe('metro-manila-city', () => {
     expect(classify('metro-manila-city', 'Metro Manila')).toEqual({ valid: false });
     expect(classify('metro-manila-city', 'NCR')).toEqual({ valid: false });
   });
+
+  it('accepts the common "<Name> City" phrasing for every city', () => {
+    expect(classify('metro-manila-city', 'Mandaluyong City')).toEqual({ valid: true, canonicalAnswer: 'Mandaluyong' });
+    expect(classify('metro-manila-city', 'Pasig City')).toEqual({ valid: true, canonicalAnswer: 'Pasig' });
+    expect(classify('metro-manila-city', 'Las Pinas City')).toEqual({ valid: true, canonicalAnswer: 'Las Piñas' });
+    expect(classify('metro-manila-city', 'Manila City')).toEqual({ valid: true, canonicalAnswer: 'Manila' });
+  });
 });
 
 describe('canadian-province', () => {
@@ -150,6 +172,17 @@ describe('canadian-province', () => {
     expect(classify('canadian-province', 'Nunavut')).toEqual({ valid: false });
     expect(classify('canadian-province', 'Northwest Territories')).toEqual({ valid: false });
   });
+
+  it('accepts the standard 2-letter postal abbreviation for every province', () => {
+    expect(classify('canadian-province', 'AB')).toEqual({ valid: true, canonicalAnswer: 'Alberta' });
+    expect(classify('canadian-province', 'ON')).toEqual({ valid: true, canonicalAnswer: 'Ontario' });
+    expect(classify('canadian-province', 'QC')).toEqual({ valid: true, canonicalAnswer: 'Quebec' });
+    expect(classify('canadian-province', 'NL')).toEqual({
+      valid: true,
+      canonicalAnswer: 'Newfoundland and Labrador',
+    });
+    expect(classify('canadian-province', 'PE')).toEqual({ valid: true, canonicalAnswer: 'Prince Edward Island' });
+  });
 });
 
 describe('asean-country', () => {
@@ -163,6 +196,10 @@ describe('asean-country', () => {
   it('has all 11 current members', () => {
     expect(PROMPTS_BY_ID.get('asean-country')!.canonicalAnswers.length).toBe(11);
   });
+
+  it('accepts "Burma" as an alias for Myanmar', () => {
+    expect(classify('asean-country', 'Burma')).toEqual({ valid: true, canonicalAnswer: 'Myanmar' });
+  });
 });
 
 describe('chess-piece', () => {
@@ -172,6 +209,10 @@ describe('chess-piece', () => {
 
   it('accepts the "Castle" alias for Rook', () => {
     expect(classify('chess-piece', 'castle')).toEqual({ valid: true, canonicalAnswer: 'Rook' });
+  });
+
+  it('accepts the "Horse" alias for Knight', () => {
+    expect(classify('chess-piece', 'horse')).toEqual({ valid: true, canonicalAnswer: 'Knight' });
   });
 
   it('rejects a non-piece', () => {
@@ -215,6 +256,10 @@ describe('taylor-swift-album', () => {
 
   it('accepts a canonical album title', () => {
     expect(classify('taylor-swift-album', 'folklore')).toEqual({ valid: true, canonicalAnswer: 'Folklore' });
+  });
+
+  it('accepts "Rep" as fan shorthand for Reputation', () => {
+    expect(classify('taylor-swift-album', 'Rep')).toEqual({ valid: true, canonicalAnswer: 'Reputation' });
   });
 
   it('accepts short aliases for the latest album', () => {

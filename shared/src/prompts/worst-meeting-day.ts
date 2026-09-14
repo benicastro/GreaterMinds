@@ -15,5 +15,16 @@ export const worstMeetingDay: PromptDefinition = {
     'Saturday',
     'Sunday',
   ],
+  aliases: {
+    Mon: 'Monday',
+    Tue: 'Tuesday',
+    Tues: 'Tuesday',
+    Wed: 'Wednesday',
+    Thu: 'Thursday',
+    Thurs: 'Thursday',
+    Fri: 'Friday',
+    Sat: 'Saturday',
+    Sun: 'Sunday',
+  },
   hostAnswer: 'Monday',
 };

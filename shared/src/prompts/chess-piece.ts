@@ -7,6 +7,7 @@ export const chessPiece: PromptDefinition = {
   canonicalAnswers: ['King', 'Queen', 'Rook', 'Bishop', 'Knight', 'Pawn'],
   aliases: {
     Castle: 'Rook',
+    Horse: 'Knight',
   },
   hostAnswer: 'Bishop',
 };

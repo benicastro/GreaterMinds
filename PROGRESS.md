@@ -71,7 +71,7 @@ the server; clients just render whatever snapshot they're sent.
   tetromino, M for the GREATER MINDS letter, 1989 for Taylor Swift album. Worth a pass to sign off
   on real values (though now overridable per game anyway via the host-answer dropdown above).
 - **Validation engine** (`shared/src/validation/`) — normalize → compile → classify, with a
-  66-case Vitest suite covering aliases, rejections, case/diacritic handling, and every
+  74-case Vitest suite covering aliases, rejections, case/diacritic handling, and every
   prompt's `hostAnswer` round-tripping correctly.
 - **Scoring** (`server/src/game/scoring.ts`) — implements the doc's exact priority rule:
   timeout/invalid = −2, host-match = −2 (checked before player-match), player-match = −1,
@@ -169,6 +169,23 @@ the server; clients just render whatever snapshot they're sent.
   produce — and the game played that exact sequence, confirming fixed mode truly ignores player
   count; a Playwright pass confirmed the toggle itself switches the picker's heading/hint text in
   the browser.
+- **Alias audit across the whole prompt bank** — triggered by a player typing "Mandaluyong City"
+  and getting rejected: `metro-manila-city` only stored bare city names (e.g. `Mandaluyong`), so
+  the very common "<Name> City" phrasing failed for every city except Quezon City (whose official
+  name already includes "City"). Fixed by aliasing "<Name> City" → the bare name for all 15 other
+  cities. That prompted a pass over every other prompt for the same class of gap — a standard,
+  widely-known short form or alternate name nobody had aliased yet. Found and fixed six more:
+  Canadian Province was only missing the *other* eight provinces' standard 2-letter Canada Post
+  codes (`AB`, `MB`, `NB`, `NL`, `NS`, `ON`, `PE`, `QC`, `SK` — only `BC`/`PEI` existed before);
+  Worst Meeting Day had no day abbreviations at all (`Mon`/`Tue`/`Tues`/`Wed`/`Thu`/`Thurs`/`Fri`/
+  `Sat`/`Sun`); Rainbow Color was missing "Purple" as an alias for Violet (the term most people
+  actually use); Chess Piece was missing "Horse" for Knight (alongside the existing "Castle" for
+  Rook); ASEAN Country was missing "Burma" for Myanmar; Playing-Card Rank was missing spelled-out
+  number words ("Ten", "Seven") for the numeric ranks; and Taylor Swift Studio Album was missing
+  "Rep" as fan shorthand for *Reputation*. Every other prompt (planets, zodiac signs, starter
+  Pokémon, tetromino, compass direction, seasons, months, the Philippine-province prompts) was
+  checked and found to have no comparable gap. All 27 new alias cases verified directly against
+  the built `shared` package, plus new Vitest coverage for each (74-case suite now, up from 66).
 - **Hard elimination** — a player's score dropping below 0 eliminates them for the rest of the
   game: they stop being prompted for answers (server rejects submissions from them defensively
   too), they're excluded from the "how many have answered" count and from scoring/collisions in

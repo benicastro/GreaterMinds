@@ -23,6 +23,7 @@ export const taylorSwiftAlbum: PromptDefinition = {
   aliases: {
     Showgirl: 'The Life of a Showgirl',
     TLOAS: 'The Life of a Showgirl',
+    Rep: 'Reputation',
     "Fearless (Taylor's Version)": 'Fearless',
     "Fearless Taylor's Version": 'Fearless',
     'Fearless (TV)': 'Fearless',
