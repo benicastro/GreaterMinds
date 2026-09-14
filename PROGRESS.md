@@ -34,7 +34,8 @@ the server; clients just render whatever snapshot they're sent.
   generic letter naming rather than any third-party branded piece names), a Metro Manila city,
   a Canadian province (territories rejected), an ASEAN country (current 11-member roster,
   including Timor-Leste), a Central Luzon province, a Philippine province beginning with B, a
-  Taylor Swift studio album (the four re-recorded "(Taylor's Version)" albums — Fearless, Speak
+  Taylor Swift studio album (all 12, through *The Life of a Showgirl* — "Showgirl"/"TLOAS"
+  aliased to its full title; the four re-recorded "(Taylor's Version)" albums — Fearless, Speak
   Now, Red, 1989 — plus their "TV" shorthand are aliased down to the original studio title rather
   than accepted as separate answers, to keep the answer space clean), a chess piece ("Castle"
   aliased to Rook), a compass direction (cardinal points only — N/S/E/W — with single-letter
@@ -70,7 +71,7 @@ the server; clients just render whatever snapshot they're sent.
   tetromino, M for the GREATER MINDS letter, 1989 for Taylor Swift album. Worth a pass to sign off
   on real values (though now overridable per game anyway via the host-answer dropdown above).
 - **Validation engine** (`shared/src/validation/`) — normalize → compile → classify, with a
-  65-case Vitest suite covering aliases, rejections, case/diacritic handling, and every
+  66-case Vitest suite covering aliases, rejections, case/diacritic handling, and every
   prompt's `hostAnswer` round-tripping correctly.
 - **Scoring** (`server/src/game/scoring.ts`) — implements the doc's exact priority rule:
   timeout/invalid = −2, host-match = −2 (checked before player-match), player-match = −1,

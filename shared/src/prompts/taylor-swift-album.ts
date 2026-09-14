@@ -18,8 +18,11 @@ export const taylorSwiftAlbum: PromptDefinition = {
     'Evermore',
     'Midnights',
     'The Tortured Poets Department',
+    'The Life of a Showgirl',
   ],
   aliases: {
+    Showgirl: 'The Life of a Showgirl',
+    TLOAS: 'The Life of a Showgirl',
     "Fearless (Taylor's Version)": 'Fearless',
     "Fearless Taylor's Version": 'Fearless',
     'Fearless (TV)': 'Fearless',

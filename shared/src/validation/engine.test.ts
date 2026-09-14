@@ -209,12 +209,23 @@ describe('season', () => {
 });
 
 describe('taylor-swift-album', () => {
-  it('has all 11 studio albums', () => {
-    expect(PROMPTS_BY_ID.get('taylor-swift-album')!.canonicalAnswers.length).toBe(11);
+  it('has all 12 studio albums', () => {
+    expect(PROMPTS_BY_ID.get('taylor-swift-album')!.canonicalAnswers.length).toBe(12);
   });
 
   it('accepts a canonical album title', () => {
     expect(classify('taylor-swift-album', 'folklore')).toEqual({ valid: true, canonicalAnswer: 'Folklore' });
+  });
+
+  it('accepts short aliases for the latest album', () => {
+    expect(classify('taylor-swift-album', 'showgirl')).toEqual({
+      valid: true,
+      canonicalAnswer: 'The Life of a Showgirl',
+    });
+    expect(classify('taylor-swift-album', 'TLOAS')).toEqual({
+      valid: true,
+      canonicalAnswer: 'The Life of a Showgirl',
+    });
   });
 
   it('normalizes "(Taylor\'s Version)" re-recordings to the original studio album', () => {
