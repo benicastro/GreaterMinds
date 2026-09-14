@@ -3,9 +3,13 @@ import type { AppSocket, HandlerContext } from '../types.js';
 import { currentRoom, errorMessage } from './util.js';
 
 export function registerRoomHandlers(socket: AppSocket, ctx: HandlerContext) {
-  const { roomManager, hostPasscode } = ctx;
+  const { roomManager, hostPasscode, rateLimiters } = ctx;
 
   socket.on(ClientEvents.HostCreateRoom, ({ passcode }, ack) => {
+    if (!rateLimiters.createRoom.attempt(socket.id)) {
+      ack?.({ success: false, error: 'Too many attempts — please wait a moment and try again.' });
+      return;
+    }
     if (hostPasscode && passcode !== hostPasscode) {
       ack?.({ success: false, error: 'Incorrect host passcode.' });
       return;
@@ -32,6 +36,10 @@ export function registerRoomHandlers(socket: AppSocket, ctx: HandlerContext) {
   });
 
   socket.on(ClientEvents.PlayerJoinRoom, ({ roomCode, nickname }, ack) => {
+    if (!rateLimiters.joinRoom.attempt(socket.id)) {
+      ack?.({ success: false, error: 'Too many attempts — please wait a moment and try again.' });
+      return;
+    }
     const room = roomManager.getRoom(roomCode);
     if (!room) {
       ack?.({ success: false, error: 'Room not found.' });
@@ -74,6 +82,8 @@ export function registerRoomHandlers(socket: AppSocket, ctx: HandlerContext) {
   });
 
   socket.on('disconnect', () => {
+    rateLimiters.createRoom.clear(socket.id);
+    rateLimiters.joinRoom.clear(socket.id);
     const room = currentRoom(socket, roomManager);
     if (!room) return;
     if (socket.data.role === 'host') {

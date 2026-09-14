@@ -1,6 +1,7 @@
 import type { Server as IOServer, Socket as IOSocket } from 'socket.io';
 import type { ActionError, HostStateSnapshot, PlayerStateSnapshot } from '@greater-minds/shared';
 import type { RoomManager } from '../rooms/RoomManager.js';
+import type { RateLimiter } from '../utils/rateLimiter.js';
 
 export interface SocketData {
   role?: 'host' | 'player';
@@ -56,4 +57,9 @@ export interface HandlerContext {
   roomManager: RoomManager;
   /** Required to create a room. Undefined means hosting is unrestricted (no passcode configured). */
   hostPasscode: string | undefined;
+  /** Bounds cheap-to-retry, guessable actions per socket connection — see rateLimiter.ts. */
+  rateLimiters: {
+    createRoom: RateLimiter;
+    joinRoom: RateLimiter;
+  };
 }

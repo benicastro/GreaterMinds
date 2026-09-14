@@ -179,6 +179,20 @@ the server; clients just render whatever snapshot they're sent.
   (16 rounds total). The Taylor's-Version alias normalization was also checked end-to-end: a
   simulated player answered `"1989 (Taylor's Version)"`, the server normalized it to `"1989"`,
   and it scored correctly as a host-match against the host's answer.
+- **Server hardening, round one** — two gaps found during a non-content improvement review:
+  `CLIENT_ORIGIN` is now declared (`sync: false`) in `render.yaml` alongside `HOST_PASSCODE`, so
+  the deploy no longer silently falls back to Socket.IO's wildcard CORS (`server/src/index.ts`)
+  just because nobody remembered to set it — still needs the actual value filled in on the Render
+  dashboard. Separately, `player:joinRoom` and `host:createRoom` had no throttling at all, and
+  room codes are only 4 characters from a 32-character set (~1M combinations, `utils/ids.ts`) —
+  a new per-socket sliding-window `RateLimiter` (`server/src/utils/rateLimiter.ts`) now caps
+  join attempts to 5/10s and create attempts to 3/min per connection, cleared on disconnect.
+  Verified live with a `socket.io-client` script: attempts 1-5 of a room-code guessing loop came
+  back "Room not found" as normal, attempt 6+ was rejected with the rate-limit message; same
+  pattern for 3 passcode guesses on `createRoom`; a legitimate single create on a fresh
+  connection was unaffected. Known limitation: this is keyed per-socket, so a scripted attacker
+  opening many connections isn't stopped by this alone — IP-based limiting would be the next step
+  if that turns out to matter.
 
 ## Bugs found and fixed during manual browser testing
 
