@@ -30,8 +30,15 @@ export function PromptPicker({ selectedIds, onChange, hostAnswers, onHostAnswerC
 
   return (
     <div className="prompt-picker">
-      <h3>Round Order ({selectedIds.length} selected)</h3>
-      {selectedIds.length === 0 && <p className="prompt-empty-hint">Add prompts below to build the round order.</p>}
+      <h3>Selected Prompts ({selectedIds.length} selected)</h3>
+      {selectedIds.length === 0 && <p className="prompt-empty-hint">Add prompts below to build the pool.</p>}
+      {selectedIds.length > 0 && (
+        <p className="prompt-empty-hint">
+          Rounds are drawn automatically as the game goes — whichever selected prompt's answer
+          count best matches how many players are still active, so the field gets tighter as
+          players are eliminated. The order below only breaks ties between equally-tight prompts.
+        </p>
+      )}
       <ol className="prompt-list">
         {selectedIds.map((id, index) => {
           const prompt = PROMPT_REGISTRY.find((candidate) => candidate.id === id);

@@ -165,6 +165,49 @@ describe('asean-country', () => {
   });
 });
 
+describe('chess-piece', () => {
+  it('has all 6 pieces', () => {
+    expect(PROMPTS_BY_ID.get('chess-piece')!.canonicalAnswers.length).toBe(6);
+  });
+
+  it('accepts the "Castle" alias for Rook', () => {
+    expect(classify('chess-piece', 'castle')).toEqual({ valid: true, canonicalAnswer: 'Rook' });
+  });
+
+  it('rejects a non-piece', () => {
+    expect(classify('chess-piece', 'Dragon')).toEqual({ valid: false });
+  });
+});
+
+describe('compass-direction', () => {
+  it('has all 4 cardinal directions', () => {
+    expect(PROMPTS_BY_ID.get('compass-direction')!.canonicalAnswers.length).toBe(4);
+  });
+
+  it('accepts single-letter aliases', () => {
+    expect(classify('compass-direction', 'n')).toEqual({ valid: true, canonicalAnswer: 'North' });
+    expect(classify('compass-direction', 'W')).toEqual({ valid: true, canonicalAnswer: 'West' });
+  });
+
+  it('rejects an intercardinal direction', () => {
+    expect(classify('compass-direction', 'Northeast')).toEqual({ valid: false });
+  });
+});
+
+describe('season', () => {
+  it('has all 4 seasons', () => {
+    expect(PROMPTS_BY_ID.get('season')!.canonicalAnswers.length).toBe(4);
+  });
+
+  it('accepts "Fall" as an alias for Autumn', () => {
+    expect(classify('season', 'fall')).toEqual({ valid: true, canonicalAnswer: 'Autumn' });
+  });
+
+  it('rejects a non-season', () => {
+    expect(classify('season', 'Monsoon')).toEqual({ valid: false });
+  });
+});
+
 describe('taylor-swift-album', () => {
   it('has all 11 studio albums', () => {
     expect(PROMPTS_BY_ID.get('taylor-swift-album')!.canonicalAnswers.length).toBe(11);

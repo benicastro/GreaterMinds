@@ -60,6 +60,12 @@ export class Room {
   selectedPromptIds: string[] = PROMPT_REGISTRY.map((prompt) => prompt.id);
   /** Per-room host answer override for each prompt, defaulted from its definition. */
   readonly hostAnswers = new Map<string, string>(PROMPT_REGISTRY.map((prompt) => [prompt.id, prompt.hostAnswer]));
+  /**
+   * Prompts from `selectedPromptIds` not yet played this game. Each round draws adaptively from
+   * this pool (see `pickNextPromptId`) rather than walking it in a fixed sequence, so the answer
+   * space narrows as the active field shrinks. Populated from `selectedPromptIds` on `startGame`.
+   */
+  private remainingPromptIds: string[] = [];
   timerDurationSeconds = DEFAULT_TIMER_SECONDS;
   currentRoundIndex = -1;
   introSlideIndex = 0;
@@ -230,6 +236,7 @@ export class Room {
     this.status = 'starting';
     this.introSlideIndex = 0;
     this.currentRoundIndex = -1;
+    this.remainingPromptIds = [...this.selectedPromptIds];
     this.touch();
     this.onStateChange();
   }
@@ -251,7 +258,7 @@ export class Room {
   private advanceRound() {
     this.currentRoundIndex += 1;
 
-    const outOfPrompts = this.currentRoundIndex >= this.selectedPromptIds.length;
+    const outOfPrompts = this.remainingPromptIds.length === 0;
     const noOneLeft = this.activePlayerIds().length === 0;
     if (outOfPrompts || noOneLeft) {
       this.status = 'game_over';
@@ -262,7 +269,7 @@ export class Room {
       return;
     }
 
-    const promptId = this.selectedPromptIds[this.currentRoundIndex];
+    const promptId = this.pickNextPromptId();
     const startedAt = Date.now();
     const endsAt = startedAt + this.timerDurationSeconds * 1000;
     const timeoutHandle = setTimeout(() => this.closeRound(), this.timerDurationSeconds * 1000);
@@ -280,6 +287,27 @@ export class Room {
     this.lastReveal = null;
     this.touch();
     this.onStateChange();
+  }
+
+  /**
+   * Draws the next round's prompt from `remainingPromptIds`, picking whichever remaining prompt's
+   * valid-answer count is closest to the number of players still active — so as eliminations
+   * shrink the field, the game reaches for tighter (fewer-answer) prompts sooner. Ties keep the
+   * host's original selection order.
+   */
+  private pickNextPromptId(): string {
+    const activeCount = this.activePlayerIds().length;
+    let bestId = this.remainingPromptIds[0];
+    let bestDiff = Infinity;
+    for (const id of this.remainingPromptIds) {
+      const diff = Math.abs(PROMPTS_BY_ID.get(id)!.canonicalAnswers.length - activeCount);
+      if (diff < bestDiff) {
+        bestDiff = diff;
+        bestId = id;
+      }
+    }
+    this.remainingPromptIds = this.remainingPromptIds.filter((id) => id !== bestId);
+    return bestId;
   }
 
   submitAnswer(playerId: string, raw: string) {

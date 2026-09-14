@@ -2,7 +2,7 @@
 
 ## Status: MVP playable end-to-end
 
-A full game (host + multiple players, 16 prompts, scoring, reveal, leaderboard) can be
+A full game (host + multiple players, 19 prompts, scoring, reveal, leaderboard) can be
 played in the browser today via `npm run dev`. See `Greater Minds Game Design.pdf` for the
 original design doc and `C:\Users\CanPhi2\.claude\plans\bubbly-stargazing-plum.md` for the
 build plan this was implemented against.
@@ -11,7 +11,7 @@ build plan this was implemented against.
 
 npm workspaces monorepo, TypeScript throughout:
 
-- **`shared/`** (`@greater-minds/shared`) — single source of truth for all 16 prompt
+- **`shared/`** (`@greater-minds/shared`) — single source of truth for all 19 prompt
   definitions, the answer-validation engine, Socket.IO event name constants, shared types,
   reveal messages, and branding strings. Imported by both `server` and `client` so prompt
   data and event contracts can't drift between them.
@@ -25,7 +25,7 @@ the server; clients just render whatever snapshot they're sent.
 
 ## What's implemented
 
-- **All 16 prompts** (`shared/src/prompts/*.ts`) — replaced the original 20-prompt bank with a
+- **All 19 prompts** (`shared/src/prompts/*.ts`) — replaced the original 20-prompt bank with a
   new set: whole number 1–10, rainbow color, worst meeting day (a focal-point prompt — all seven
   days are valid, the game never judges whether it's genuinely someone's least-favorite day),
   delete a month, a letter appearing in "GREATER MINDS" (the 10 unique letters), a Solar System
@@ -33,22 +33,27 @@ the server; clients just render whatever snapshot they're sent.
   (Ace/2–10/Jack/Queen/King with letter aliases A/J/Q/K, suits excluded), a tetromino (I/J/L/O/S/T/Z,
   generic letter naming rather than any third-party branded piece names), a Metro Manila city,
   a Canadian province (territories rejected), an ASEAN country (current 11-member roster,
-  including Timor-Leste), a Central Luzon province, a Philippine province beginning with B, and a
+  including Timor-Leste), a Central Luzon province, a Philippine province beginning with B, a
   Taylor Swift studio album (the four re-recorded "(Taylor's Version)" albums — Fearless, Speak
   Now, Red, 1989 — plus their "TV" shorthand are aliased down to the original studio title rather
-  than accepted as separate answers, to keep the answer space clean). Each keeps the same
-  validation-engine shape as before: canonical answers, alias maps where useful (month
-  abbreviations, card-rank letters, ASEAN long-form names, Metro Manila city shortcuts, the
-  Taylor's-Version re-recording aliases), and explicit rejections where called for. The
-  number-1-10 prompt keeps the one bit of custom logic in the whole bank (word-form parsing,
-  integer/range check) — every other prompt is pure data on top of the generic validation engine.
-  The old region/pop-culture prompts (Philippine Province, Region, Harry Potter House, Infinity
-  Stone, Card Suit, Friends Character, Straw Hat Pirates, Chess Piece, PH Vice Presidents,
-  Continents, Days of the Week) and the 82-province `ph-provinces.ts` data file were removed
-  along with them.
+  than accepted as separate answers, to keep the answer space clean), a chess piece ("Castle"
+  aliased to Rook), a compass direction (cardinal points only — N/S/E/W — with single-letter
+  aliases), and a season (Autumn is canonical, "Fall" aliased to it). The last three were added
+  specifically as tight, small-answer-count prompts for the late game (see adaptive round
+  selection below) — Chess Piece (6 answers), Compass Direction and Season (4 each) are now the
+  smallest prompts in the bank. Each keeps the same validation-engine shape as before: canonical
+  answers, alias maps where useful (month abbreviations, card-rank letters, ASEAN long-form
+  names, Metro Manila city shortcuts, the Taylor's-Version re-recording aliases), and explicit
+  rejections where called for. The number-1-10 prompt keeps the one bit of custom logic in the
+  whole bank (word-form parsing, integer/range check) — every other prompt is pure data on top of
+  the generic validation engine. The old region/pop-culture prompts (Philippine Province, Region,
+  Harry Potter House, Infinity Stone, Card Suit, Friends Character, Straw Hat Pirates, PH Vice
+  Presidents, Continents, Days of the Week) and the 82-province `ph-provinces.ts` data file were
+  removed; Chess Piece was among them originally but was later re-added (see above).
 - **Default round order narrows the answer space** — `PROMPT_REGISTRY` is sorted by number of
-  valid answers, descending (Metro Manila City's 16 down to a four-way tie at 7), so spectator-
-  friendly elimination play gets progressively harder as the game goes on. All prompts are also
+  valid answers, descending (Metro Manila City's 16 down to a two-way tie at 4: Compass Direction
+  and Season), so spectator-friendly elimination play gets progressively harder as the game goes
+  on. All prompts are also
   pre-selected by default when a room is created (`Room.ts`'s `selectedPromptIds` now defaults to
   the full registry instead of an empty array) — the host trims/reorders from a full list rather
   than building one up from scratch.
@@ -65,7 +70,7 @@ the server; clients just render whatever snapshot they're sent.
   tetromino, M for the GREATER MINDS letter, 1989 for Taylor Swift album. Worth a pass to sign off
   on real values (though now overridable per game anyway via the host-answer dropdown above).
 - **Validation engine** (`shared/src/validation/`) — normalize → compile → classify, with a
-  53-case Vitest suite covering aliases, rejections, case/diacritic handling, and every
+  65-case Vitest suite covering aliases, rejections, case/diacritic handling, and every
   prompt's `hostAnswer` round-tripping correctly.
 - **Scoring** (`server/src/game/scoring.ts`) — implements the doc's exact priority rule:
   timeout/invalid = −2, host-match = −2 (checked before player-match), player-match = −1,
@@ -135,6 +140,20 @@ the server; clients just render whatever snapshot they're sent.
   by checking `element.getAnimations()` mid-flight through a full two-round game (host + player)
   that the animation is actually `running` at every one of those ten transition points, not just
   present in the stylesheet.
+- **Adaptive round selection** (`Room.ts`'s `pickNextPromptId`) — rounds are no longer played in a
+  fixed sequence. Each time a round ends, the next prompt is drawn from whichever of the host's
+  still-unplayed selected prompts has a valid-answer count closest to however many players are
+  still active (not eliminated), so the answer space narrows in step with the actual shrinking
+  field rather than just a pre-set round order — a bad round of eliminations pulls in a tighter
+  prompt immediately next, a clean round keeps things looser longer. Ties keep the host's original
+  selection order. The picker's "Round Order" list is now framed as a pool + tie-break order
+  rather than a fixed sequence (`PromptPicker.tsx` copy updated accordingly). Verified with
+  scripted `socket.io-client` simulations with staggered elimination pacing across multiple player
+  groups: a 12-player run showed picks tracking the active count down through 12→9→7; a fuller
+  16-player run through all 19 prompts showed a clean staircase from 16 down to 4 active players,
+  with Chess Piece (6 answers) landing at 6 active players and Compass Direction / Season (4 each)
+  landing at 5 and 4 active players respectively — confirming the small late-game prompts added
+  for this purpose actually get selected for the last rounds, not just in theory.
 - **Hard elimination** — a player's score dropping below 0 eliminates them for the rest of the
   game: they stop being prompted for answers (server rejects submissions from them defensively
   too), they're excluded from the "how many have answered" count and from scoring/collisions in
