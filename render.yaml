@@ -9,3 +9,11 @@ services:
     envVars:
       - key: HOST_PASSCODE
         sync: false
+      # Restricts which origins may open a Socket.IO connection to this server. Same-origin
+      # players (the normal case — the client is served from this same service) are never
+      # subject to this check; it only matters for third-party sites trying to connect in.
+      # Set to this service's actual URL (or custom domain) in the Render dashboard, e.g.
+      # https://greater-minds.onrender.com — without it, the server falls back to allowing
+      # any origin (see server/src/index.ts).
+      - key: CLIENT_ORIGIN
+        sync: false
