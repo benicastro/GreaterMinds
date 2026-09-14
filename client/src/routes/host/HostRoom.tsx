@@ -107,35 +107,37 @@ export function HostRoom() {
           <h2>{state.reveal.category}</h2>
           <p className="prompt-reference">{state.reveal.promptText}</p>
           <AnswerHistogram perPlayer={state.reveal.perPlayer} hostAnswer={state.reveal.hostAnswer} />
-          <table className="reveal-grid">
-            <thead>
-              <tr>
-                <th></th>
-                <th>Player</th>
-                <th>Answer</th>
-                <th>Result</th>
-                <th>Δ</th>
-                <th>Score</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[...state.reveal.perPlayer]
-                .sort((a, b) => b.newScore - a.newScore)
-                .map((entry) => (
-                  <tr key={entry.playerId} className={`outcome-${entry.outcome}`}>
-                    <td className="outcome-icon">{OUTCOME_ICON[entry.outcome]}</td>
-                    <td>{entry.nickname}</td>
-                    <td>{entry.rawAnswer ?? '(none)'}</td>
-                    <td>
-                      {entry.message}
-                      {entry.eliminated && <span className="eliminated-tag">ELIMINATED</span>}
-                    </td>
-                    <td>{entry.scoreDelta}</td>
-                    <td>{entry.newScore}</td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
+          <div className="table-scroll">
+            <table className="reveal-grid">
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>Player</th>
+                  <th>Answer</th>
+                  <th>Result</th>
+                  <th>Δ</th>
+                  <th>Score</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[...state.reveal.perPlayer]
+                  .sort((a, b) => b.newScore - a.newScore)
+                  .map((entry) => (
+                    <tr key={entry.playerId} className={`outcome-${entry.outcome}`}>
+                      <td className="outcome-icon">{OUTCOME_ICON[entry.outcome]}</td>
+                      <td>{entry.nickname}</td>
+                      <td>{entry.rawAnswer ?? '(none)'}</td>
+                      <td>
+                        {entry.message}
+                        {entry.eliminated && <span className="eliminated-tag">ELIMINATED</span>}
+                      </td>
+                      <td>{entry.scoreDelta}</td>
+                      <td>{entry.newScore}</td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
           <button onClick={nextRound}>{isLastRound ? 'Show Final Results' : 'Next Round'}</button>
         </section>
       )}

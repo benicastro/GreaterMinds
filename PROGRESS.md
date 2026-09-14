@@ -194,6 +194,27 @@ the server; clients just render whatever snapshot they're sent.
   connection was unaffected. Known limitation: this is keyed per-socket, so a scripted attacker
   opening many connections isn't stopped by this alone — IP-based limiting would be the next step
   if that turns out to matter.
+- **Mobile responsiveness** — `index.css` previously had exactly one media query in the whole
+  file (`prefers-reduced-motion`); a Playwright audit at 320-360px viewport widths (both host and
+  player, every room state, plus a stress-test 26-character no-space nickname) found the page
+  genuinely overflowing horizontally on almost every screen. Root causes, each fixed narrowly
+  rather than papered over: (1) the shared `header` (title + room-code badge, or nickname + score)
+  had no `flex-wrap`, so the two sides fought for one line instead of stacking; (2) `.prompt-row`
+  (host-answer dropdown + reorder/remove buttons) had the same no-wrap problem, plus a `<select>`
+  can render as wide as its *widest option* regardless of the selected one (e.g. "Newfoundland and
+  Labrador"), so it got a `max-width` cap; (3) `.reveal-grid`/`.leaderboard` are genuine data
+  tables that don't usefully collapse to one column on a phone, so each is now wrapped in a
+  `.table-scroll` div (`overflow-x: auto`) that scrolls *within its own card* instead of forcing
+  the whole page wider; (4) free-form user text (nicknames, raw answers) has no guaranteed break
+  opportunity, so `overflow-wrap: anywhere` was added — deliberately scoped to just the elements
+  that render that text (`header h1`, table cells, histogram labels, the roster list, the winner
+  announcement), not applied globally, because a global rule collapses every flex item's
+  min-content to near-zero and fights `flex: 1` siblings into shrinking to nothing instead of the
+  row wrapping (hit this directly: category names in the prompt picker started rendering one
+  character per line before the fix was scoped down). Re-verified at 320px, 360px, and a normal
+  1280px desktop width after each fix — zero horizontal overflow anywhere in the game flow at any
+  of the three, and the 1280px pass confirmed no visual regression from the new `flex-wrap`/
+  `max-width` rules at the width they were previously never exercised at.
 
 ## Bugs found and fixed during manual browser testing
 
