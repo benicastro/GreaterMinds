@@ -11,6 +11,10 @@ import { Confetti } from '../../components/Confetti';
 import { GetReadyScreen } from '../../components/GetReadyScreen';
 import { PoweredByFooter } from '../../components/PoweredByFooter';
 import { formatWinnerAnnouncement, getWinners } from '../../winnerAnnouncement';
+import { LivePlayerGame } from '../../components/live/LivePlayerGame';
+import { StrikeMarks } from '../../components/live/StrikeMarks';
+
+const LIVE_SLIDES = ['/title-bg.png'];
 
 export function PlayerRoom() {
   const { roomCode } = useParams<{ roomCode: string }>();
@@ -28,13 +32,22 @@ export function PlayerRoom() {
 
   if (!state) return <p>Connecting…</p>;
 
+  const live = state.gameMode === 'live' ? state.live : null;
+
   return (
     <div className="player-room">
       <header>
         <h1>{state.nickname}</h1>
-        <p className="score-display">
-          {state.score} pts {state.eliminated && <span className="eliminated-tag">ELIMINATED</span>}
-        </p>
+        {state.gameMode === 'live' ? (
+          <p className="score-display">
+            {live && <StrikeMarks strikes={live.strikes} max={live.maxStrikes} />}{' '}
+            {state.eliminated && <span className="eliminated-tag">OUT</span>}
+          </p>
+        ) : (
+          <p className="score-display">
+            {state.score} pts {state.eliminated && <span className="eliminated-tag">ELIMINATED</span>}
+          </p>
+        )}
       </header>
 
       {(state.status === 'lobby' || state.status === 'configuring') && (
@@ -46,10 +59,13 @@ export function PlayerRoom() {
           key={`starting-${state.introSlideIndex ?? 0}`}
           slideIndex={state.introSlideIndex ?? 0}
           className="state-transition"
+          slides={live ? LIVE_SLIDES : undefined}
         />
       )}
 
-      {state.status === 'in_round' && state.currentRound && (
+      {live && <LivePlayerGame state={state} live={live} onSubmitAnswer={submitAnswer} />}
+
+      {!live && state.status === 'in_round' && state.currentRound && (
         <section key={`round-${state.currentRound.roundNumber}`} className="state-transition">
           <h2>{state.currentRound.category}</h2>
           <p>{state.currentRound.promptText}</p>
@@ -64,7 +80,7 @@ export function PlayerRoom() {
         </section>
       )}
 
-      {state.status === 'reveal' &&
+      {!live && state.status === 'reveal' &&
         (state.reveal ? (
           <div key={`reveal-${state.reveal.promptId}`} className="state-transition">
             <h2>{state.reveal.category}</h2>
@@ -85,7 +101,7 @@ export function PlayerRoom() {
           </section>
         ))}
 
-      {state.status === 'game_over' && state.finalLeaderboard && (
+      {!live && state.status === 'game_over' && state.finalLeaderboard && (
         <section className="state-transition">
           <Confetti />
           <h2>Final Results</h2>

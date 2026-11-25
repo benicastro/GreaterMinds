@@ -11,4 +11,10 @@ export function broadcastRoomState(io: AppServer, room: Room) {
       io.to(player.socketId).emit(ServerEvents.RoomPlayerState, room.getPlayerSnapshot(player.playerId));
     }
   }
+  if (room.displaySocketIds.size > 0) {
+    const displayState = room.getDisplaySnapshot();
+    for (const socketId of room.displaySocketIds) {
+      io.to(socketId).emit(ServerEvents.RoomDisplayState, displayState);
+    }
+  }
 }

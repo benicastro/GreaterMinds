@@ -1,6 +1,11 @@
 import {
+  DisplayStateSnapshot,
+  GameMode,
   HostStateSnapshot,
   INTRO_SLIDE_COUNT,
+  LIVE_INTRO_SLIDE_COUNT,
+  LIVE_PROMPT_REGISTRY,
+  LIVE_PROMPTS_BY_ID,
   LeaderboardEntry,
   PlayerStateSnapshot,
   PROMPT_REGISTRY,
@@ -14,6 +19,7 @@ import {
   pickRevealMessage,
 } from '@greater-minds/shared';
 import { getCompiledPrompt } from '../game/compiledPrompts.js';
+import { LiveGame } from '../game/LiveGame.js';
 import { RoundOutcome, scoreRound, SubmissionRecord } from '../game/scoring.js';
 import { GameError } from '../utils/errors.js';
 import { generateId } from '../utils/ids.js';
@@ -72,7 +78,15 @@ export class Room {
   currentRoundIndex = -1;
   introSlideIndex = 0;
   lastActivityAt = Date.now();
+  /** Which rule set this room plays. Classic is the default; see LiveGame for Live Mode's rules. */
+  gameMode: GameMode = 'classic';
+  /** Live Mode's prompt order (free-text prompts, separate from Classic's registry). */
+  livePromptIds: string[] = LIVE_PROMPT_REGISTRY.map((prompt) => prompt.id);
+  /** Sockets showing the optional read-only TV display. */
+  readonly displaySocketIds = new Set<string>();
 
+  /** Live Mode's game state, created when a Live game starts. Null in Classic. */
+  private live: LiveGame | null = null;
   private currentRound: CurrentRound | null = null;
   private lastReveal: RevealPayload | null = null;
   private finalLeaderboard: LeaderboardEntry[] | null = null;
@@ -142,6 +156,15 @@ export class Room {
     this.onStateChange();
   }
 
+  attachDisplaySocket(socketId: string) {
+    this.displaySocketIds.add(socketId);
+    this.touch();
+  }
+
+  detachDisplaySocket(socketId: string) {
+    this.displaySocketIds.delete(socketId);
+  }
+
   removePlayer(playerId: string) {
     this.players.delete(playerId);
     this.touch();
@@ -150,6 +173,9 @@ export class Room {
 
   /** Drops players who have been disconnected longer than the grace period. Returns true if anything changed. */
   sweepDisconnectedPlayers(graceMs: number): boolean {
+    // In a Live game, phones going to sleep mid-game is normal - never drop a player (and their
+    // strikes) once it has started.
+    if (this.gameMode === 'live' && this.status !== 'lobby' && this.status !== 'configuring') return false;
     const now = Date.now();
     let changed = false;
     for (const [playerId, player] of this.players) {
@@ -222,6 +248,31 @@ export class Room {
     this.onStateChange();
   }
 
+  setGameMode(mode: GameMode) {
+    this.assertNotStarted();
+    if (mode !== 'classic' && mode !== 'live') {
+      throw new GameError('INVALID_GAME_MODE', `Unknown game mode: ${mode}`);
+    }
+    this.gameMode = mode;
+    if (this.status === 'lobby') this.status = 'configuring';
+    this.touch();
+    this.onStateChange();
+  }
+
+  updateLivePromptSelection(promptIds: string[]) {
+    this.assertNotStarted();
+    const unique = Array.from(new Set(promptIds));
+    for (const id of unique) {
+      if (!LIVE_PROMPTS_BY_ID.has(id)) {
+        throw new GameError('UNKNOWN_PROMPT', `Unknown prompt id: ${id}`);
+      }
+    }
+    this.livePromptIds = unique;
+    if (this.status === 'lobby') this.status = 'configuring';
+    this.touch();
+    this.onStateChange();
+  }
+
   updateTimerConfig(seconds: number) {
     this.assertNotStarted();
     if (!Number.isFinite(seconds)) {
@@ -243,6 +294,10 @@ export class Room {
 
   startGame() {
     this.assertNotStarted();
+    if (this.gameMode === 'live') {
+      this.startLiveGame();
+      return;
+    }
     if (this.selectedPromptIds.length === 0) {
       throw new GameError('NO_PROMPTS_SELECTED', 'Select at least one prompt before starting.');
     }
@@ -254,15 +309,65 @@ export class Room {
     this.onStateChange();
   }
 
+  private startLiveGame() {
+    if (this.livePromptIds.length === 0) {
+      throw new GameError('NO_PROMPTS_SELECTED', 'Select at least one prompt before starting.');
+    }
+    if (this.players.size < 2) {
+      throw new GameError('NOT_ENOUGH_PLAYERS', 'Live Mode needs at least two players.');
+    }
+    this.live = new LiveGame(
+      {
+        players: this.players,
+        timerDurationSeconds: this.timerDurationSeconds,
+        getStatus: () => this.status,
+        setStatus: (status) => {
+          this.status = status;
+        },
+        changed: () => {
+          this.touch();
+          this.onStateChange();
+        },
+      },
+      this.livePromptIds,
+    );
+    this.status = 'starting';
+    this.introSlideIndex = 0;
+    this.touch();
+    this.onStateChange();
+  }
+
+  private requireLive(): LiveGame {
+    if (this.gameMode !== 'live' || !this.live) {
+      throw new GameError('NOT_LIVE_MODE', 'This only applies to a Live Mode game in progress.');
+    }
+    return this.live;
+  }
+
+  submitLiveHostAnswer(answer: string) {
+    this.requireLive().submitHostAnswer(answer);
+  }
+
+  setLiveStrike(playerId: string, strike: boolean) {
+    this.requireLive().setStrike(playerId, strike);
+  }
+
+  confirmLiveRound() {
+    this.requireLive().confirmRound();
+  }
+
   /** Advances the shared intro slide shown on the starting screen, or begins round 1 from the last slide. */
   advanceIntro() {
     if (this.status !== 'starting') {
       throw new GameError('NOT_STARTING', 'Can only advance the intro from the starting screen.');
     }
-    if (this.introSlideIndex < INTRO_SLIDE_COUNT - 1) {
+    const slideCount = this.live ? LIVE_INTRO_SLIDE_COUNT : INTRO_SLIDE_COUNT;
+    if (this.introSlideIndex < slideCount - 1) {
       this.introSlideIndex += 1;
       this.touch();
       this.onStateChange();
+    } else if (this.live) {
+      this.live.startRound();
     } else {
       this.advanceRound();
     }
@@ -328,6 +433,10 @@ export class Room {
   }
 
   submitAnswer(playerId: string, raw: string) {
+    if (this.live) {
+      this.live.submitAnswer(playerId, raw);
+      return;
+    }
     if (this.status !== 'in_round' || !this.currentRound || this.currentRound.closing) {
       throw new GameError('ROUND_NOT_ACTIVE', 'No active round to answer.');
     }
@@ -362,6 +471,10 @@ export class Room {
   }
 
   forceCloseRound() {
+    if (this.live) {
+      this.live.forceCloseRound();
+      return;
+    }
     if (this.status !== 'in_round' || !this.currentRound) {
       throw new GameError('ROUND_NOT_ACTIVE', 'No active round.');
     }
@@ -415,6 +528,10 @@ export class Room {
   }
 
   nextRound() {
+    if (this.live) {
+      this.live.nextRound();
+      return;
+    }
     if (this.status !== 'reveal') {
       throw new GameError('NOT_IN_REVEAL', 'Can only advance to the next round after a reveal.');
     }
@@ -422,6 +539,10 @@ export class Room {
   }
 
   endGame() {
+    if (this.live) {
+      this.live.end();
+      return;
+    }
     if (this.currentRound?.timeoutHandle) clearTimeout(this.currentRound.timeoutHandle);
     this.status = 'game_over';
     this.currentRound = null;
@@ -461,7 +582,7 @@ export class Room {
     };
   }
 
-  getHostSnapshot(): HostStateSnapshot {
+  private getClassicHostSnapshot(): HostStateSnapshot {
     return {
       roomCode: this.roomCode,
       status: this.status,
@@ -483,10 +604,54 @@ export class Room {
       reveal: this.status === 'reveal' ? this.lastReveal : null,
       finalLeaderboard: this.status === 'game_over' ? this.finalLeaderboard : null,
       introSlideIndex: this.status === 'starting' ? this.introSlideIndex : null,
+      gameMode: this.gameMode,
+      live: null,
+    };
+  }
+
+  getHostSnapshot(): HostStateSnapshot {
+    const snapshot = this.getClassicHostSnapshot();
+    if (this.gameMode !== 'live') return snapshot;
+    const live = this.live;
+    return {
+      ...snapshot,
+      currentRoundNumber: live?.currentRoundNumber() ?? null,
+      totalRounds: this.livePromptIds.length,
+      currentRound: live?.roundStartedPayload() ?? null,
+      answeredCount: live?.answeredCount() ?? 0,
+      reveal: null,
+      finalLeaderboard: null,
+      live: live
+        ? live.hostState(this.livePromptIds)
+        : {
+            selectedPromptIds: this.livePromptIds,
+            standings: [],
+            phase: null,
+            hostAnswer: null,
+            review: null,
+            result: null,
+            finalStandings: null,
+          },
     };
   }
 
   getPlayerSnapshot(playerId: string): PlayerStateSnapshot {
+    const snapshot = this.getClassicPlayerSnapshot(playerId);
+    if (!this.live) return { ...snapshot, gameMode: this.gameMode };
+    return {
+      ...snapshot,
+      gameMode: this.gameMode,
+      score: 0,
+      eliminated: this.live.isEliminated(playerId),
+      currentRound: this.live.roundStartedPayload(),
+      hasAnsweredCurrentRound: this.live.hasAnswered(playerId),
+      reveal: null,
+      finalLeaderboard: null,
+      live: this.live.playerState(playerId),
+    };
+  }
+
+  private getClassicPlayerSnapshot(playerId: string): PlayerStateSnapshot {
     const player = this.players.get(playerId);
     if (!player) throw new GameError('UNKNOWN_PLAYER', 'Unknown player.');
 
@@ -507,6 +672,36 @@ export class Room {
       reveal,
       finalLeaderboard: this.status === 'game_over' ? this.finalLeaderboard : null,
       introSlideIndex: this.status === 'starting' ? this.introSlideIndex : null,
+      gameMode: this.gameMode,
+      live: null,
+    };
+  }
+
+  /** Read-only view for the optional TV display. Never includes answers or unconfirmed strikes. */
+  getDisplaySnapshot(): DisplayStateSnapshot {
+    const liveView = this.live?.displayState();
+    return {
+      roomCode: this.roomCode,
+      status: this.status,
+      gameMode: this.gameMode,
+      introSlideIndex: this.status === 'starting' ? this.introSlideIndex : null,
+      currentRound: liveView?.currentRound ?? null,
+      phase: liveView?.phase ?? null,
+      answeredCount: liveView?.answeredCount ?? 0,
+      activeCount: liveView?.activeCount ?? this.players.size,
+      standings:
+        liveView?.standings ??
+        Array.from(this.players.values()).map((player) => ({
+          playerId: player.playerId,
+          nickname: player.nickname,
+          connected: player.connected,
+          strikes: 0,
+          eliminated: false,
+          eliminatedInRound: null,
+          rank: 1,
+        })),
+      result: liveView?.result ?? null,
+      finalStandings: liveView?.finalStandings ?? null,
     };
   }
 }

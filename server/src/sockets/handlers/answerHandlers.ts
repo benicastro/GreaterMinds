@@ -33,6 +33,18 @@ export function registerAnswerHandlers(socket: AppSocket, ctx: HandlerContext) {
     withHostRoom(socket, roomManager, ack, (room) => room.nextRound());
   });
 
+  socket.on(ClientEvents.HostSubmitLiveAnswer, ({ answer }, ack) => {
+    withHostRoom(socket, roomManager, ack, (room) => room.submitLiveHostAnswer(answer));
+  });
+
+  socket.on(ClientEvents.HostSetLiveStrike, ({ playerId, strike }, ack) => {
+    withHostRoom(socket, roomManager, ack, (room) => room.setLiveStrike(playerId, strike));
+  });
+
+  socket.on(ClientEvents.HostConfirmLiveRound, (_payload, ack) => {
+    withHostRoom(socket, roomManager, ack, (room) => room.confirmLiveRound());
+  });
+
   socket.on(ClientEvents.HostEndGame, (_payload, ack) => {
     withHostRoom(socket, roomManager, ack, (room) => room.endGame());
   });

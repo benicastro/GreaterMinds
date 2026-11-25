@@ -4,6 +4,7 @@ import { JoinRoomEntry } from './routes/JoinRoomEntry';
 import { HostNew } from './routes/host/HostNew';
 import { HostRoomRoute } from './routes/host/HostRoomRoute';
 import { PlayerRoomRoute } from './routes/player/PlayerRoomRoute';
+import { DisplayRoom } from './routes/display/DisplayRoom';
 
 export default function App() {
   return (
@@ -14,6 +15,7 @@ export default function App() {
         <Route path="/host/new" element={<HostNew />} />
         <Route path="/host/:roomCode" element={<HostRoomRoute />} />
         <Route path="/play/:roomCode" element={<PlayerRoomRoute />} />
+        <Route path="/display/:roomCode" element={<DisplayRoom />} />
       </Routes>
     </BrowserRouter>
   );

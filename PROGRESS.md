@@ -1,6 +1,6 @@
 # GREATER MINDS — Progress Log
 
-## Status: MVP playable end-to-end
+## Status: MVP playable end-to-end — two game modes (Classic + Live)
 
 A full game (host + multiple players, 19 prompts, scoring, reveal, leaderboard) can be
 played in the browser today via `npm run dev`. See `Greater Minds Game Design.pdf` for the
@@ -11,17 +11,22 @@ build plan this was implemented against.
 
 npm workspaces monorepo, TypeScript throughout:
 
-- **`shared/`** (`@greater-minds/shared`) — single source of truth for all 19 prompt
+- **`shared/`** (`@greater-minds/shared`) — single source of truth for all 19 Classic prompt
   definitions, the answer-validation engine, Socket.IO event name constants, shared types,
-  reveal messages, and branding strings. Imported by both `server` and `client` so prompt
+  reveal messages, and branding strings, plus Live Mode's prompts, types and standings
+  (`shared/src/live/`). Imported by both `server` and `client` so prompt
   data and event contracts can't drift between them.
 - **`server/`** (`@greater-minds/server`) — Node + Socket.IO. Authoritative room/round state
   machine and scoring. No database — everything lives in server memory for the life of a room.
-- **`client/`** — Vite + React + TypeScript. One app, two route trees: `/host/*` (the shared
-  screen a host casts/displays) and `/play/:roomCode` (each player's own phone/browser).
+  Live Mode's rules engine is its own class (`server/src/game/LiveGame.ts`) that `Room` delegates to.
+- **`client/`** — Vite + React + TypeScript. One app, three route trees: `/host/*` (the host's
+  screen — cast to a TV in Classic, a private control panel in Live), `/play/:roomCode` (each
+  player's own phone/browser), and `/display/:roomCode` (Live Mode's optional read-only TV strike
+  board).
 
 Game flow: `lobby → configuring → in_round → reveal → (loop) → game_over`, driven entirely by
-the server; clients just render whatever snapshot they're sent.
+the server; clients just render whatever snapshot they're sent. Both game modes share this
+status flow; in Live, `reveal` covers both the strike-marking step and the confirmed result.
 
 ## What's implemented
 
@@ -247,6 +252,58 @@ the server; clients just render whatever snapshot they're sent.
   of the three, and the 1280px pass confirmed no visual regression from the new `flex-wrap`/
   `max-width` rules at the width they were previously never exercised at.
 
+## Live Mode (second game mode, branch `feature/live-mode`)
+
+An in-person variant of the same "don't say what I say" idea, chosen per room with a **Game Mode**
+toggle in the lobby (Classic stays the default). Classic's rules, scoring and screens are untouched:
+Live Mode lives in its own engine (`server/src/game/LiveGame.ts`) and its own components
+(`client/src/components/live/`), and `Room.ts` only gained `if (this.live)` delegation at each round
+entry point plus a separate snapshot override.
+
+**Rules (agreed with the user, 2026-11-25):**
+- ~20 players, each answering on their own phone; the host runs a private control panel.
+- Strikes instead of points: at most one strike per player per round (however many people they
+  matched); three strikes = out. No answer in time = an automatic strike.
+- **Group phase** (3+ players left): avoid matching each other.
+- **Final two**: strike counts carry over; players avoid matching each other *and* the host. The host
+  types their answer during the round, at the same time as players; it locks once submitted, and
+  the round won't auto-close until it's in (the timer still closes it).
+- The host judges every strike by hand — answers are free text, no validation engine.
+- If confirming a round would knock out every remaining player, that round's strikes are thrown out
+  and play continues. If a round leaves exactly one player, they win.
+
+**Round flow:** answer on phones (timer) → round closes → each phone shows only that player's own
+answer in huge type to hold up and read aloud → the host sees every answer (sorted so matching
+answers sit next to each other), taps to give/remove strikes (no-answers pre-marked), then presses
+**Confirm Round** — only then do players see Safe/Strike/Out and the strike board update → Next Round.
+
+**Optional TV display** at `/display/:roomCode` (link shown in the lobby): read-only strike board,
+prompt and timer. It never receives anyone's answers, the host's answer, or unconfirmed strikes.
+
+**Other details:**
+- Live prompts are separate from Classic's (`shared/src/live/prompts.ts`) — just category + question
+  text. The current 20 are a **test set** (approved for playtesting, ordered big → small answer
+  pool); the user plans to replace them after testing. Since Live plays in fixed order, narrowing
+  tracks round number rather than actual players left — adaptive selection (tag each prompt with a
+  rough answer count, as Classic does) was proposed but not yet approved.
+- Rounds play in the host's chosen order; the game ends when one player is left, prompts run out, or
+  the host ends it. Final ranking (`shared/src/live/standings.ts`): survivors by fewest strikes, then
+  eliminated players by how long they lasted; ties share a rank.
+- Needs at least 2 players to start. Shows only the title slide before round 1 (Classic's rules
+  infographic doesn't apply).
+- Disconnected players are never swept out of a Live game once it has started (phones sleeping
+  mid-game is expected in person); Classic's 60s sweep is unchanged.
+
+**Verified:** a `socket.io-client` script against the real server played a 5-player game through
+every rule (auto no-answer strike, strike toggling, confirm gating, elimination at 3, eliminated
+players can't answer, group → final two, host-answer gating, voided round, last-player win, final
+ranking with ties), checked that no answers leak to other players or the display, re-ran a Classic
+round to confirm scoring is unchanged, and checked timer expiry in the final two. A Playwright pass
+drove the host panel, four phones (360px) and the TV display through a round with no console errors
+and no horizontal overflow at 360px. New Vitest suite for live standings (83 tests total).
+
+**Open items:** final Live prompts (after testing); possibly adaptive prompt selection; optional Live rules slide for the intro; a real in-room playtest.
+
 ## Bugs found and fixed during manual browser testing
 
 - **"Host a Game" hung on "Connecting…" forever.** Root cause: `HostNew`'s `useEffect` called
@@ -289,9 +346,12 @@ the server; clients just render whatever snapshot they're sent.
 - **No sound cues** — reveal/round transitions are silent; a bigger lift than it sounds since
   browsers block autoplay-with-sound until the user has interacted with the page. Not started.
 - **No QR code for joining.** Not started.
-- **No automated browser/UI tests** — coverage today is the validation-engine, leaderboard, and
-  scoring-adjacent unit tests plus scripted socket-level end-to-end tests; manual browser
-  playtesting is how UI regressions get caught for now.
+- **No automated browser/UI tests** — coverage today is the validation-engine, leaderboard,
+  live-standings and scoring-adjacent unit tests plus scripted socket-level end-to-end tests;
+  manual browser playtesting is how UI regressions get caught for now. (Gotcha when scripting
+  Playwright: a `full_page=True` screenshot swallows the very next click on that page — use a
+  tall viewport instead.)
+- **Live Mode prompts are a test set**, and Live rounds play in fixed order (no adaptive pick).
 
 ## How to run it
 
@@ -300,8 +360,19 @@ npm run dev
 ```
 
 Starts the server (`:4000`) and Vite client (prints its own port, typically `:5173`)
-concurrently. Open the client URL, host a game in one tab, join from others (or real phones on
-the same LAN using your machine's IP instead of `localhost`). Copy `server/.env.example` to
+concurrently. Open the client URL, host a game in one tab, and join from others.
+
+To join from real phones on the same Wi-Fi (needed to playtest Live Mode), the Vite dev server
+has to listen on the network — plain `npm run dev` only serves `localhost`:
+
+```
+npx concurrently -n server,client "npm run dev -w server" "npm run dev -w client -- --host"
+```
+
+Vite then prints a `Network:` URL (your machine's IP, e.g. `http://192.168.x.x:5173`) for
+phones to open. If phones can't load it, allow Node through Windows Firewall on private
+networks. On Windows, stopping the dev command can leave the `node` processes holding ports
+4000/5173; if the next start fails with `EADDRINUSE`, stop those processes first. Copy `server/.env.example` to
 `server/.env` and set `HOST_PASSCODE` to restrict who can create a room — without it, hosting
 is open to anyone.
 
@@ -309,5 +380,7 @@ is open to anyone.
 
 1. Keep playtesting in the browser and report anything that looks or feels off — hard
    elimination in particular is worth a real multi-player playtest to see how it feels.
-2. Optional next round of polish: sound cues on reveal, a QR code for joining, an accessibility
+2. Playtest Live Mode in a room with real phones, then swap in the final Live prompts and decide
+   whether Live should pick prompts adaptively by players remaining.
+3. Optional next round of polish: sound cues on reveal, a QR code for joining, an accessibility
    pass (focus outlines, contrast, aria-labels).

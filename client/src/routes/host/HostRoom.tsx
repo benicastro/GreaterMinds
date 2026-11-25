@@ -12,6 +12,10 @@ import { GetReadyScreen } from '../../components/GetReadyScreen';
 import { PoweredByFooter } from '../../components/PoweredByFooter';
 import { OUTCOME_ICON } from '../../outcomeMeta';
 import { formatWinnerAnnouncement, getWinners } from '../../winnerAnnouncement';
+import { LivePromptPicker } from '../../components/live/LivePromptPicker';
+import { LiveHostGame } from '../../components/live/LiveHostGame';
+
+const LIVE_SLIDES = ['/title-bg.png'];
 
 export function HostRoom() {
   const {
@@ -27,6 +31,8 @@ export function HostRoom() {
     nextRound,
     forceCloseRound,
     endGame,
+    setGameMode,
+    updateLivePromptSelection,
   } = useHost();
 
   if (!roomCode || !state) {
@@ -45,6 +51,8 @@ export function HostRoom() {
 
   const isLastRound = state.currentRoundNumber !== null && state.currentRoundNumber >= state.totalRounds;
   const activePlayerCount = state.players.filter((player) => !player.eliminated).length;
+  const isLive = state.gameMode === 'live';
+  const displayUrl = `${window.location.origin}/display/${roomCode}`;
 
   return (
     <div className="host-room">
@@ -57,36 +65,73 @@ export function HostRoom() {
 
       {(state.status === 'lobby' || state.status === 'configuring') && (
         <section className="state-transition">
-          <PlayerRosterList players={state.players} />
+          <PlayerRosterList players={state.players} showScore={!isLive} />
           <fieldset className="round-selection-mode">
-            <legend>Round Order</legend>
+            <legend>Game Mode</legend>
             <label>
               <input
                 type="radio"
-                name="roundSelectionMode"
-                checked={state.roundSelectionMode === 'adaptive'}
-                onChange={() => setRoundSelectionMode('adaptive')}
+                name="gameMode"
+                checked={state.gameMode === 'classic'}
+                onChange={() => setGameMode('classic')}
               />
-              Adaptive — each round is picked to match how many players are still active, so the
-              game narrows as people are eliminated
+              Classic — scored, auto-checked answers; played on screens
             </label>
             <label>
               <input
                 type="radio"
-                name="roundSelectionMode"
-                checked={state.roundSelectionMode === 'fixed'}
-                onChange={() => setRoundSelectionMode('fixed')}
+                name="gameMode"
+                checked={state.gameMode === 'live'}
+                onChange={() => setGameMode('live')}
               />
-              Fixed — play the list below in exactly this order
+              Live — in person: everyone reads their answer aloud and you call strikes. Three strikes
+              and you're out; with two left, they also avoid your answer
             </label>
           </fieldset>
-          <PromptPicker
-            selectedIds={state.selectedPromptIds}
-            onChange={updatePromptSelection}
-            hostAnswers={state.hostAnswers}
-            onHostAnswerChange={setHostAnswer}
-            roundSelectionMode={state.roundSelectionMode}
-          />
+          {isLive && state.live && (
+            <>
+              <p className="live-display-link">
+                Optional TV display (strike board, no answers):{' '}
+                <a href={displayUrl} target="_blank" rel="noreferrer">
+                  {displayUrl}
+                </a>
+              </p>
+              <LivePromptPicker selectedIds={state.live.selectedPromptIds} onChange={updateLivePromptSelection} />
+            </>
+          )}
+          {!isLive && (
+            <>
+              <fieldset className="round-selection-mode">
+                <legend>Round Order</legend>
+                <label>
+                  <input
+                    type="radio"
+                    name="roundSelectionMode"
+                    checked={state.roundSelectionMode === 'adaptive'}
+                    onChange={() => setRoundSelectionMode('adaptive')}
+                  />
+                  Adaptive — each round is picked to match how many players are still active, so the
+                  game narrows as people are eliminated
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    name="roundSelectionMode"
+                    checked={state.roundSelectionMode === 'fixed'}
+                    onChange={() => setRoundSelectionMode('fixed')}
+                  />
+                  Fixed — play the list below in exactly this order
+                </label>
+              </fieldset>
+              <PromptPicker
+                selectedIds={state.selectedPromptIds}
+                onChange={updatePromptSelection}
+                hostAnswers={state.hostAnswers}
+                onHostAnswerChange={setHostAnswer}
+                roundSelectionMode={state.roundSelectionMode}
+              />
+            </>
+          )}
           <label className="timer-config">
             Timer (seconds):
             <input
@@ -97,9 +142,19 @@ export function HostRoom() {
               onChange={(event) => updateTimerConfig(Number(event.target.value))}
             />
           </label>
-          <button onClick={startGame} disabled={state.selectedPromptIds.length === 0}>
+          <button
+            onClick={startGame}
+            disabled={
+              isLive
+                ? (state.live?.selectedPromptIds.length ?? 0) === 0 || state.players.length < 2
+                : state.selectedPromptIds.length === 0
+            }
+          >
             Start Game
           </button>
+          {isLive && state.players.length < 2 && (
+            <p className="prompt-empty-hint">Live Mode needs at least two players to start.</p>
+          )}
         </section>
       )}
 
@@ -109,10 +164,13 @@ export function HostRoom() {
           slideIndex={state.introSlideIndex ?? 0}
           onAdvance={advanceIntro}
           className="state-transition"
+          slides={isLive ? LIVE_SLIDES : undefined}
         />
       )}
 
-      {state.status === 'in_round' && state.currentRound && (
+      {isLive && state.live && <LiveHostGame state={state} live={state.live} />}
+
+      {!isLive && state.status === 'in_round' && state.currentRound && (
         <section key={`round-${state.currentRound.roundNumber}`} className="state-transition">
           <h2>
             Round {state.currentRound.roundNumber} / {state.currentRound.totalRounds}: {state.currentRound.category}
@@ -126,7 +184,7 @@ export function HostRoom() {
         </section>
       )}
 
-      {state.status === 'reveal' && state.reveal && (
+      {!isLive && state.status === 'reveal' && state.reveal && (
         <section key={`reveal-${state.reveal.promptId}`} className="state-transition">
           <h2>{state.reveal.category}</h2>
           <p className="prompt-reference">{state.reveal.promptText}</p>
@@ -166,7 +224,7 @@ export function HostRoom() {
         </section>
       )}
 
-      {state.status === 'game_over' && state.finalLeaderboard && (
+      {!isLive && state.status === 'game_over' && state.finalLeaderboard && (
         <section className="state-transition">
           <Confetti />
           <h2>Final Results</h2>
