@@ -277,7 +277,10 @@ prompt and timer. It never receives anyone's answers, the host's answer, or unco
 
 **Other details:**
 - Live prompts are separate from Classic's (`shared/src/live/prompts.ts`) — just category + question
-  text. **The current 10 are placeholders**; the user is writing the real set.
+  text. The current 20 are a **test set** (approved for playtesting, ordered big → small answer
+  pool); the user plans to replace them after testing. Since Live plays in fixed order, narrowing
+  tracks round number rather than actual players left — adaptive selection (tag each prompt with a
+  rough answer count, as Classic does) was proposed but not yet approved.
 - Rounds play in the host's chosen order; the game ends when one player is left, prompts run out, or
   the host ends it. Final ranking (`shared/src/live/standings.ts`): survivors by fewest strikes, then
   eliminated players by how long they lasted; ties share a rank.
@@ -294,7 +297,7 @@ round to confirm scoring is unchanged, and checked timer expiry in the final two
 drove the host panel, four phones (360px) and the TV display through a round with no console errors
 and no horizontal overflow at 360px. New Vitest suite for live standings (83 tests total).
 
-**Open items:** real Live prompts; optional Live rules slide for the intro; a real in-room playtest.
+**Open items:** final Live prompts (after testing); possibly adaptive prompt selection; optional Live rules slide for the intro; a real in-room playtest.
 
 ## Bugs found and fixed during manual browser testing
 
