@@ -73,6 +73,23 @@ export function registerRoomHandlers(socket: AppSocket, ctx: HandlerContext) {
     ack?.({ success: true, playerState: room.getPlayerSnapshot(playerId) });
   });
 
+  // Read-only TV display. Shares the join rate limit since it also takes a guessable room code.
+  socket.on(ClientEvents.DisplayWatch, ({ roomCode }, ack) => {
+    if (!rateLimiters.joinRoom.attempt(socket.id)) {
+      ack?.({ success: false, error: 'Too many attempts - please wait a moment and try again.' });
+      return;
+    }
+    const room = roomManager.getRoom(roomCode);
+    if (!room) {
+      ack?.({ success: false, error: 'Room not found.' });
+      return;
+    }
+    room.attachDisplaySocket(socket.id);
+    socket.data.role = 'display';
+    socket.data.roomCode = room.roomCode;
+    ack?.({ success: true, displayState: room.getDisplaySnapshot() });
+  });
+
   socket.on(ClientEvents.PlayerLeaveRoom, (_payload, ack) => {
     const room = currentRoom(socket, roomManager);
     if (room && socket.data.playerId) {
@@ -86,7 +103,9 @@ export function registerRoomHandlers(socket: AppSocket, ctx: HandlerContext) {
     rateLimiters.joinRoom.clear(socket.id);
     const room = currentRoom(socket, roomManager);
     if (!room) return;
-    if (socket.data.role === 'host') {
+    if (socket.data.role === 'display') {
+      room.detachDisplaySocket(socket.id);
+    } else if (socket.data.role === 'host') {
       room.markHostDisconnected();
     } else if (socket.data.playerId) {
       room.markPlayerDisconnected(socket.data.playerId);

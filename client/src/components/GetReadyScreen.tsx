@@ -4,14 +4,17 @@ export function GetReadyScreen({
   slideIndex,
   onAdvance,
   className,
+  slides = INTRO_SLIDES,
 }: {
   slideIndex: number;
   onAdvance?: () => void;
   className?: string;
+  /** Slide images to step through; defaults to Classic's title + rules infographic. */
+  slides?: string[];
 }) {
   const isHost = Boolean(onAdvance);
-  const isLastSlide = slideIndex >= INTRO_SLIDES.length - 1;
-  const activeImage = INTRO_SLIDES[slideIndex] ?? INTRO_SLIDES[0];
+  const isLastSlide = slideIndex >= slides.length - 1;
+  const activeImage = slides[slideIndex] ?? slides[0];
 
   return (
     <div className={`get-ready-screen${className ? ` ${className}` : ''}`} role="status" aria-live="polite">

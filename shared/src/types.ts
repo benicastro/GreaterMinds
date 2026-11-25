@@ -1,3 +1,5 @@
+import type { GameMode, LiveHostState, LivePlayerState } from './live/types.js';
+
 export type OutcomeBucket = 'unique' | 'player-match' | 'host-match' | 'invalid' | 'timeout';
 
 export interface ValidationResult {
@@ -106,6 +108,9 @@ export interface HostStateSnapshot {
   finalLeaderboard: LeaderboardEntry[] | null;
   /** Which intro slide is showing, while status is 'starting'. Null otherwise. */
   introSlideIndex: number | null;
+  gameMode: GameMode;
+  /** Live Mode state; null in Classic. */
+  live: LiveHostState | null;
 }
 
 export interface PlayerStateSnapshot {
@@ -121,6 +126,9 @@ export interface PlayerStateSnapshot {
   finalLeaderboard: LeaderboardEntry[] | null;
   /** Which intro slide is showing, while status is 'starting'. Null otherwise. */
   introSlideIndex: number | null;
+  gameMode: GameMode;
+  /** Live Mode state; null in Classic. */
+  live: LivePlayerState | null;
 }
 
 export interface ActionError {

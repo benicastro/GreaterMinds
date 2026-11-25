@@ -15,11 +15,18 @@ export const ClientEvents = {
   HostNextRound: 'host:nextRound',
   HostEndGame: 'host:endGame',
   PlayerLeaveRoom: 'player:leaveRoom',
+  HostSetGameMode: 'host:setGameMode',
+  HostUpdateLivePromptSelection: 'host:updateLivePromptSelection',
+  HostSubmitLiveAnswer: 'host:submitLiveAnswer',
+  HostSetLiveStrike: 'host:setLiveStrike',
+  HostConfirmLiveRound: 'host:confirmLiveRound',
+  DisplayWatch: 'display:watch',
 } as const;
 
 export const ServerEvents = {
   RoomHostState: 'room:hostState',
   RoomPlayerState: 'room:playerState',
+  RoomDisplayState: 'room:displayState',
   RoomPlayerJoined: 'room:playerJoined',
   RoomPlayerLeft: 'room:playerLeft',
   RoomPlayerDisconnected: 'room:playerDisconnected',

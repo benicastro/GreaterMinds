@@ -1,6 +1,6 @@
 # GREATER MINDS — Progress Log
 
-## Status: MVP playable end-to-end
+## Status: MVP playable end-to-end — two game modes (Classic + Live)
 
 A full game (host + multiple players, 19 prompts, scoring, reveal, leaderboard) can be
 played in the browser today via `npm run dev`. See `Greater Minds Game Design.pdf` for the
@@ -246,6 +246,55 @@ the server; clients just render whatever snapshot they're sent.
   1280px desktop width after each fix — zero horizontal overflow anywhere in the game flow at any
   of the three, and the 1280px pass confirmed no visual regression from the new `flex-wrap`/
   `max-width` rules at the width they were previously never exercised at.
+
+## Live Mode (second game mode, branch `feature/live-mode`)
+
+An in-person variant of the same "don't say what I say" idea, chosen per room with a **Game Mode**
+toggle in the lobby (Classic stays the default). Classic's rules, scoring and screens are untouched:
+Live Mode lives in its own engine (`server/src/game/LiveGame.ts`) and its own components
+(`client/src/components/live/`), and `Room.ts` only gained `if (this.live)` delegation at each round
+entry point plus a separate snapshot override.
+
+**Rules (agreed with the user, 2026-11-25):**
+- ~20 players, each answering on their own phone; the host runs a private control panel.
+- Strikes instead of points: at most one strike per player per round (however many people they
+  matched); three strikes = out. No answer in time = an automatic strike.
+- **Group phase** (3+ players left): avoid matching each other.
+- **Final two**: strike counts carry over; players avoid matching each other *and* the host. The host
+  types their answer during the round, at the same time as players; it locks once submitted, and
+  the round won't auto-close until it's in (the timer still closes it).
+- The host judges every strike by hand — answers are free text, no validation engine.
+- If confirming a round would knock out every remaining player, that round's strikes are thrown out
+  and play continues. If a round leaves exactly one player, they win.
+
+**Round flow:** answer on phones (timer) → round closes → each phone shows only that player's own
+answer in huge type to hold up and read aloud → the host sees every answer (sorted so matching
+answers sit next to each other), taps to give/remove strikes (no-answers pre-marked), then presses
+**Confirm Round** — only then do players see Safe/Strike/Out and the strike board update → Next Round.
+
+**Optional TV display** at `/display/:roomCode` (link shown in the lobby): read-only strike board,
+prompt and timer. It never receives anyone's answers, the host's answer, or unconfirmed strikes.
+
+**Other details:**
+- Live prompts are separate from Classic's (`shared/src/live/prompts.ts`) — just category + question
+  text. **The current 10 are placeholders**; the user is writing the real set.
+- Rounds play in the host's chosen order; the game ends when one player is left, prompts run out, or
+  the host ends it. Final ranking (`shared/src/live/standings.ts`): survivors by fewest strikes, then
+  eliminated players by how long they lasted; ties share a rank.
+- Needs at least 2 players to start. Shows only the title slide before round 1 (Classic's rules
+  infographic doesn't apply).
+- Disconnected players are never swept out of a Live game once it has started (phones sleeping
+  mid-game is expected in person); Classic's 60s sweep is unchanged.
+
+**Verified:** a `socket.io-client` script against the real server played a 5-player game through
+every rule (auto no-answer strike, strike toggling, confirm gating, elimination at 3, eliminated
+players can't answer, group → final two, host-answer gating, voided round, last-player win, final
+ranking with ties), checked that no answers leak to other players or the display, re-ran a Classic
+round to confirm scoring is unchanged, and checked timer expiry in the final two. A Playwright pass
+drove the host panel, four phones (360px) and the TV display through a round with no console errors
+and no horizontal overflow at 360px. New Vitest suite for live standings (83 tests total).
+
+**Open items:** real Live prompts; optional Live rules slide for the intro; a real in-room playtest.
 
 ## Bugs found and fixed during manual browser testing
 

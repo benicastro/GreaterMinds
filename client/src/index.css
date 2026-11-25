@@ -890,3 +890,259 @@ header {
 .leaderboard tr.eliminated-row {
   opacity: 0.55;
 }
+
+/* ---- Live Mode: strikes instead of scores ---- */
+
+
+.strike-card-name,
+.live-review-name,
+.live-review-answer,
+.live-flash-answer {
+  overflow-wrap: anywhere;
+}
+
+.strike-marks {
+  display: inline-flex;
+  gap: 4px;
+  font-weight: 800;
+  letter-spacing: 0;
+  vertical-align: middle;
+}
+
+.strike-mark {
+  color: var(--muted);
+  opacity: 0.6;
+}
+
+.strike-mark.filled {
+  color: var(--invalid);
+  opacity: 1;
+}
+
+.strike-board {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(130px, 100%), 1fr));
+  gap: 8px;
+}
+
+.strike-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--bg);
+  border: 2px solid transparent;
+  min-width: 0;
+}
+
+.strike-card-name {
+  font-weight: 700;
+}
+
+.strike-card.is-out {
+  opacity: 0.45;
+}
+
+.strike-card.is-out .strike-card-name {
+  text-decoration: line-through;
+}
+
+.strike-card.just-struck {
+  border-color: var(--player-match);
+  background: rgba(251, 191, 36, 0.1);
+}
+
+.strike-card.just-out {
+  border-color: var(--invalid);
+  background: rgba(248, 113, 113, 0.12);
+  opacity: 1;
+}
+
+.strike-card.is-self {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.live-phase-banner {
+  display: inline-block;
+  margin: 0 0 8px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--accent-bg);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.live-phase-banner.final-two {
+  background: rgba(251, 146, 60, 0.15);
+  color: var(--host-match);
+}
+
+.live-host-answer {
+  font-size: 1.1em;
+}
+
+.live-host-answer strong {
+  color: var(--host-match);
+  overflow-wrap: anywhere;
+}
+
+.live-display-link {
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.live-display-link a {
+  color: var(--accent);
+}
+
+.prompt-text-preview {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.live-review-list {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Overrides the global button look: each row is a big tap target that toggles a strike. */
+.host-room button.live-review-row,
+button.live-review-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr) auto;
+  align-items: center;
+  gap: 4px 16px;
+  text-align: left;
+  font-size: 1rem;
+  font-weight: 400;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--text);
+  border: 2px solid transparent;
+}
+
+button.live-review-row.is-struck {
+  border-color: var(--invalid);
+  background: rgba(248, 113, 113, 0.12);
+}
+
+.live-review-name {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  min-width: 0;
+  font-weight: 700;
+}
+
+.live-review-answer {
+  min-width: 0;
+  font-size: 1.15em;
+}
+
+.live-review-answer.no-answer {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.live-review-verdict {
+  font-weight: 800;
+  color: var(--muted);
+}
+
+button.live-review-row.is-struck .live-review-verdict {
+  color: var(--invalid);
+}
+
+.live-result-note {
+  font-size: 1.2em;
+  font-weight: 600;
+}
+
+/* Player phone at reveal: the answer is shown huge so it can be held up to the room. */
+.live-flash {
+  text-align: center;
+}
+
+.live-flash-hint {
+  color: var(--muted);
+}
+
+.live-flash-answer {
+  font-size: clamp(2.5rem, 14vw, 4.5rem);
+  font-weight: 800;
+  line-height: 1.1;
+  margin: 24px 0;
+  color: var(--accent);
+}
+
+.live-flash-answer.no-answer {
+  color: var(--muted);
+}
+
+.live-flash-wait {
+  color: var(--muted);
+  font-size: 0.9em;
+}
+
+.live-verdict {
+  text-align: center;
+  padding: 24px 16px;
+  border-radius: 12px;
+}
+
+.live-verdict-title {
+  font-size: 2.25rem;
+  font-weight: 800;
+  margin: 0 0 8px;
+}
+
+.live-verdict.safe {
+  background: rgba(74, 222, 128, 0.12);
+  color: var(--unique);
+}
+
+.live-verdict.struck {
+  background: rgba(251, 191, 36, 0.12);
+  color: var(--player-match);
+}
+
+.live-verdict.out {
+  background: rgba(248, 113, 113, 0.14);
+  color: var(--invalid);
+}
+
+.live-verdict.voided {
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+
+/* TV display: wider canvas for a ~20-player strike board. */
+#root:has(.display-room) {
+  max-width: 1400px;
+}
+
+.display-prompt {
+  font-size: 1.6em;
+  font-weight: 600;
+}
+
+.display-callout,
+.display-join {
+  font-size: 1.4em;
+}
+
+.display-join strong {
+  color: var(--accent);
+}

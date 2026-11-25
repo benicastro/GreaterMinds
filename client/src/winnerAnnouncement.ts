@@ -1,6 +1,11 @@
-import type { LeaderboardEntry } from '@greater-minds/shared';
+/** Anything ranked: Classic's leaderboard entries and Live Mode's strike standings both fit. */
+interface RankedEntry {
+  playerId: string;
+  nickname: string;
+  rank: number;
+}
 
-export function getWinners(leaderboard: LeaderboardEntry[]): LeaderboardEntry[] {
+export function getWinners<T extends RankedEntry>(leaderboard: T[]): T[] {
   return leaderboard.filter((entry) => entry.rank === 1);
 }
 
@@ -8,10 +13,10 @@ export function getWinners(leaderboard: LeaderboardEntry[]): LeaderboardEntry[] 
  * Formats the game-over banner text, crediting every player tied for first place.
  * Pass the viewer's own playerId to personalize it as "You" when they're among the winners.
  */
-export function formatWinnerAnnouncement(winners: LeaderboardEntry[], selfPlayerId?: string): string {
+export function formatWinnerAnnouncement(winners: RankedEntry[], selfPlayerId?: string): string {
   if (winners.length === 0) return '';
 
-  const label = (winner: LeaderboardEntry) => (winner.playerId === selfPlayerId ? 'You' : winner.nickname);
+  const label = (winner: RankedEntry) => (winner.playerId === selfPlayerId ? 'You' : winner.nickname);
 
   if (winners.length > 1) {
     return `🏆 It's a tie! ${winners.map(label).join(' & ')} win!`;

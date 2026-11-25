@@ -1,10 +1,17 @@
 import type { Server as IOServer, Socket as IOSocket } from 'socket.io';
-import type { ActionError, HostStateSnapshot, PlayerStateSnapshot, RoundSelectionMode } from '@greater-minds/shared';
+import type {
+  ActionError,
+  DisplayStateSnapshot,
+  GameMode,
+  HostStateSnapshot,
+  PlayerStateSnapshot,
+  RoundSelectionMode,
+} from '@greater-minds/shared';
 import type { RoomManager } from '../rooms/RoomManager.js';
 import type { RateLimiter } from '../utils/rateLimiter.js';
 
 export interface SocketData {
-  role?: 'host' | 'player';
+  role?: 'host' | 'player' | 'display';
   roomCode?: string;
   playerId?: string;
 }
@@ -42,11 +49,21 @@ export interface ClientToServerEvents {
   'host:nextRound': (payload: Record<string, never>, ack: (res: SuccessAck) => void) => void;
   'host:endGame': (payload: Record<string, never>, ack: (res: SuccessAck) => void) => void;
   'player:leaveRoom': (payload: Record<string, never>, ack: (res: SuccessAck) => void) => void;
+  'host:setGameMode': (payload: { mode: GameMode }, ack: (res: SuccessAck) => void) => void;
+  'host:updateLivePromptSelection': (payload: { promptIds: string[] }, ack: (res: SuccessAck) => void) => void;
+  'host:submitLiveAnswer': (payload: { answer: string }, ack: (res: SuccessAck) => void) => void;
+  'host:setLiveStrike': (payload: { playerId: string; strike: boolean }, ack: (res: SuccessAck) => void) => void;
+  'host:confirmLiveRound': (payload: Record<string, never>, ack: (res: SuccessAck) => void) => void;
+  'display:watch': (
+    payload: { roomCode: string },
+    ack: (res: SuccessAck & { displayState?: DisplayStateSnapshot }) => void,
+  ) => void;
 }
 
 export interface ServerToClientEvents {
   'room:hostState': (snapshot: HostStateSnapshot) => void;
   'room:playerState': (snapshot: PlayerStateSnapshot) => void;
+  'room:displayState': (snapshot: DisplayStateSnapshot) => void;
   actionError: (error: ActionError) => void;
 }
 

@@ -7,3 +7,6 @@ export * from './messages/revealMessages.js';
 export * from './messages/branding.js';
 export * from './leaderboard.js';
 export * from './introSlides.js';
+export * from './live/types.js';
+export * from './live/prompts.js';
+export * from './live/standings.js';

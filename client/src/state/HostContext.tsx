@@ -3,6 +3,7 @@ import {
   ClientEvents,
   ServerEvents,
   type ActionError,
+  type GameMode,
   type HostStateSnapshot,
   type RoundSelectionMode,
 } from '@greater-minds/shared';
@@ -35,6 +36,11 @@ interface HostContextValue {
   nextRound: () => void;
   forceCloseRound: () => void;
   endGame: () => void;
+  setGameMode: (mode: GameMode) => void;
+  updateLivePromptSelection: (promptIds: string[]) => void;
+  submitLiveAnswer: (answer: string) => void;
+  setLiveStrike: (playerId: string, strike: boolean) => void;
+  confirmLiveRound: () => void;
 }
 
 const HostContext = createContext<HostContextValue | null>(null);
@@ -160,6 +166,42 @@ export function HostProvider({ children, roomCodeFromRoute }: { children: ReactN
     socket.emit(ClientEvents.HostEndGame, {}, ackHandler('Failed to end game.'));
   }, [ackHandler]);
 
+  const setGameMode = useCallback(
+    (mode: GameMode) => {
+      socket.emit(ClientEvents.HostSetGameMode, { mode }, ackHandler('Failed to change game mode.'));
+    },
+    [ackHandler],
+  );
+
+  const updateLivePromptSelection = useCallback(
+    (promptIds: string[]) => {
+      socket.emit(
+        ClientEvents.HostUpdateLivePromptSelection,
+        { promptIds },
+        ackHandler('Failed to update prompt selection.'),
+      );
+    },
+    [ackHandler],
+  );
+
+  const submitLiveAnswer = useCallback(
+    (answer: string) => {
+      socket.emit(ClientEvents.HostSubmitLiveAnswer, { answer }, ackHandler('Failed to lock in your answer.'));
+    },
+    [ackHandler],
+  );
+
+  const setLiveStrike = useCallback(
+    (playerId: string, strike: boolean) => {
+      socket.emit(ClientEvents.HostSetLiveStrike, { playerId, strike }, ackHandler('Failed to mark strike.'));
+    },
+    [ackHandler],
+  );
+
+  const confirmLiveRound = useCallback(() => {
+    socket.emit(ClientEvents.HostConfirmLiveRound, {}, ackHandler('Failed to confirm the round.'));
+  }, [ackHandler]);
+
   const clearError = useCallback(() => setError(null), []);
 
   const value = useMemo<HostContextValue>(
@@ -178,6 +220,11 @@ export function HostProvider({ children, roomCodeFromRoute }: { children: ReactN
       nextRound,
       forceCloseRound,
       endGame,
+      setGameMode,
+      updateLivePromptSelection,
+      submitLiveAnswer,
+      setLiveStrike,
+      confirmLiveRound,
     }),
     [
       roomCode,
@@ -194,6 +241,11 @@ export function HostProvider({ children, roomCodeFromRoute }: { children: ReactN
       nextRound,
       forceCloseRound,
       endGame,
+      setGameMode,
+      updateLivePromptSelection,
+      submitLiveAnswer,
+      setLiveStrike,
+      confirmLiveRound,
     ],
   );
 
