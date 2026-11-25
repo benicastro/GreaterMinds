@@ -11,17 +11,22 @@ build plan this was implemented against.
 
 npm workspaces monorepo, TypeScript throughout:
 
-- **`shared/`** (`@greater-minds/shared`) — single source of truth for all 19 prompt
+- **`shared/`** (`@greater-minds/shared`) — single source of truth for all 19 Classic prompt
   definitions, the answer-validation engine, Socket.IO event name constants, shared types,
-  reveal messages, and branding strings. Imported by both `server` and `client` so prompt
+  reveal messages, and branding strings, plus Live Mode's prompts, types and standings
+  (`shared/src/live/`). Imported by both `server` and `client` so prompt
   data and event contracts can't drift between them.
 - **`server/`** (`@greater-minds/server`) — Node + Socket.IO. Authoritative room/round state
   machine and scoring. No database — everything lives in server memory for the life of a room.
-- **`client/`** — Vite + React + TypeScript. One app, two route trees: `/host/*` (the shared
-  screen a host casts/displays) and `/play/:roomCode` (each player's own phone/browser).
+  Live Mode's rules engine is its own class (`server/src/game/LiveGame.ts`) that `Room` delegates to.
+- **`client/`** — Vite + React + TypeScript. One app, three route trees: `/host/*` (the host's
+  screen — cast to a TV in Classic, a private control panel in Live), `/play/:roomCode` (each
+  player's own phone/browser), and `/display/:roomCode` (Live Mode's optional read-only TV strike
+  board).
 
 Game flow: `lobby → configuring → in_round → reveal → (loop) → game_over`, driven entirely by
-the server; clients just render whatever snapshot they're sent.
+the server; clients just render whatever snapshot they're sent. Both game modes share this
+status flow; in Live, `reveal` covers both the strike-marking step and the confirmed result.
 
 ## What's implemented
 
@@ -341,9 +346,12 @@ and no horizontal overflow at 360px. New Vitest suite for live standings (83 tes
 - **No sound cues** — reveal/round transitions are silent; a bigger lift than it sounds since
   browsers block autoplay-with-sound until the user has interacted with the page. Not started.
 - **No QR code for joining.** Not started.
-- **No automated browser/UI tests** — coverage today is the validation-engine, leaderboard, and
-  scoring-adjacent unit tests plus scripted socket-level end-to-end tests; manual browser
-  playtesting is how UI regressions get caught for now.
+- **No automated browser/UI tests** — coverage today is the validation-engine, leaderboard,
+  live-standings and scoring-adjacent unit tests plus scripted socket-level end-to-end tests;
+  manual browser playtesting is how UI regressions get caught for now. (Gotcha when scripting
+  Playwright: a `full_page=True` screenshot swallows the very next click on that page — use a
+  tall viewport instead.)
+- **Live Mode prompts are a test set**, and Live rounds play in fixed order (no adaptive pick).
 
 ## How to run it
 
@@ -352,8 +360,19 @@ npm run dev
 ```
 
 Starts the server (`:4000`) and Vite client (prints its own port, typically `:5173`)
-concurrently. Open the client URL, host a game in one tab, join from others (or real phones on
-the same LAN using your machine's IP instead of `localhost`). Copy `server/.env.example` to
+concurrently. Open the client URL, host a game in one tab, and join from others.
+
+To join from real phones on the same Wi-Fi (needed to playtest Live Mode), the Vite dev server
+has to listen on the network — plain `npm run dev` only serves `localhost`:
+
+```
+npx concurrently -n server,client "npm run dev -w server" "npm run dev -w client -- --host"
+```
+
+Vite then prints a `Network:` URL (your machine's IP, e.g. `http://192.168.x.x:5173`) for
+phones to open. If phones can't load it, allow Node through Windows Firewall on private
+networks. On Windows, stopping the dev command can leave the `node` processes holding ports
+4000/5173; if the next start fails with `EADDRINUSE`, stop those processes first. Copy `server/.env.example` to
 `server/.env` and set `HOST_PASSCODE` to restrict who can create a room — without it, hosting
 is open to anyone.
 
@@ -361,5 +380,7 @@ is open to anyone.
 
 1. Keep playtesting in the browser and report anything that looks or feels off — hard
    elimination in particular is worth a real multi-player playtest to see how it feels.
-2. Optional next round of polish: sound cues on reveal, a QR code for joining, an accessibility
+2. Playtest Live Mode in a room with real phones, then swap in the final Live prompts and decide
+   whether Live should pick prompts adaptively by players remaining.
+3. Optional next round of polish: sound cues on reveal, a QR code for joining, an accessibility
    pass (focus outlines, contrast, aria-labels).
