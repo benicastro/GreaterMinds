@@ -91,6 +91,24 @@ status flow; in Live, `reveal` covers both the strike-marking step and the confi
   `sessionStorage`; refreshing a host or player tab mid-game re-attaches to the existing
   player/room instead of losing them. Disconnect grace periods (60s players / 5min host) and
   a periodic stale-room sweep bound memory growth.
+- **Re-attach after a dropped connection** (phone sleeping, network blip) — previously the
+  reconnect handshake only ran once on page load, so when Socket.IO silently reconnected the
+  server saw an anonymous socket: the page looked fine but was frozen (no new rounds, answers
+  rejected) until the player refreshed. `PlayerContext`/`HostContext` now re-send their stored
+  session on every socket `connect` (the same pattern `DisplayRoom` already used); if the seat is
+  gone (server restarted, Classic grace period expired) the player drops to the join form with a
+  message and the host to the "Start a new game" screen. A fixed "Reconnecting…" banner
+  (`components/ConnectionBanner.tsx`) shows on player and host screens while the socket is down,
+  after a 1s delay so quick blips don't flash it; the TV display deliberately has none. Server
+  side, `markPlayerDisconnected`/`markHostDisconnected` now ignore a disconnect from a socket
+  that's already been replaced — the client can reconnect before the server notices the old
+  socket died, and that late disconnect used to mark a connected player as gone (in Classic,
+  getting them swept from the room 60s later). Verified with a Playwright pass (host + two 360px
+  phones: drops in the lobby, mid-round and on the reveal; answers after reconnecting are
+  accepted and close the round; host's Next Round reaches both phones; banner shows/clears, no
+  flash on a sub-second blip, no overflow at 360px) that fails on the old code, plus a
+  `socket.io-client` script for the late-disconnect race. Not covered: a phone that closes the tab
+  or loses its tab storage still comes back as a new player (deliberately out of scope for now).
 - **Client UI** — landing page; host flow (create room → pick prompts/order/timer → run
   rounds → reveal grid → final leaderboard); player flow (join with nickname → answer →
   personal reveal card → final leaderboard). Branded with the game's tagline/core philosophy,

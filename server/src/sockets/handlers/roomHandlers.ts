@@ -106,9 +106,9 @@ export function registerRoomHandlers(socket: AppSocket, ctx: HandlerContext) {
     if (socket.data.role === 'display') {
       room.detachDisplaySocket(socket.id);
     } else if (socket.data.role === 'host') {
-      room.markHostDisconnected();
+      room.markHostDisconnected(socket.id);
     } else if (socket.data.playerId) {
-      room.markPlayerDisconnected(socket.data.playerId);
+      room.markPlayerDisconnected(socket.data.playerId, socket.id);
     }
   });
 }
