@@ -362,8 +362,14 @@ npm run dev
 Starts the server (`:4000`) and Vite client (prints its own port, typically `:5173`)
 concurrently. Open the client URL, host a game in one tab, and join from others.
 
-To join from real phones on the same Wi-Fi (needed to playtest Live Mode), the Vite dev server
-has to listen on the network — plain `npm run dev` only serves `localhost`:
+**Playtesting with real phones (including Live Mode) is done on the Render deployment**, which
+auto-deploys `main` — phones join over any network, no local setup needed. Things to know there:
+open the site a minute or two before players join (the free-tier instance sleeps when idle and
+takes up to a minute to wake); don't push to `main` mid-game (a redeploy/restart wipes all
+in-memory room state); and the deploy is current if the lobby shows the Game Mode toggle.
+
+For local-only testing from phones on the same Wi-Fi, the Vite dev server has to listen on the
+network — plain `npm run dev` only serves `localhost`:
 
 ```
 npx concurrently -n server,client "npm run dev -w server" "npm run dev -w client -- --host"
@@ -380,7 +386,12 @@ is open to anyone.
 
 1. Keep playtesting in the browser and report anything that looks or feels off — hard
    elimination in particular is worth a real multi-player playtest to see how it feels.
-2. Playtest Live Mode in a room with real phones, then swap in the final Live prompts and decide
-   whether Live should pick prompts adaptively by players remaining.
-3. Optional next round of polish: sound cues on reveal, a QR code for joining, an accessibility
+2. Playtest Live Mode in a room with real phones on the Render deployment, then swap in the final
+   Live prompts and decide whether Live should pick prompts adaptively by players remaining. Worth
+   watching during the playtest: whether the fixed-order prompts narrow at the right pace for the
+   actual players left, how fast the host can mark strikes across ~20 answers, and whether players
+   need a rules slide before round 1.
+3. Set `CLIENT_ORIGIN` on the Render dashboard (declared in `render.yaml` but still unset, so the
+   server falls back to wildcard CORS).
+4. Optional next round of polish: sound cues on reveal, a QR code for joining, an accessibility
    pass (focus outlines, contrast, aria-labels).
