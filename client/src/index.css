@@ -530,6 +530,20 @@ header {
   font-weight: 600;
 }
 
+/* Shown while the socket is down; sits above everything, including full-page intro slides. */
+.connection-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  padding: 0.5rem 1rem;
+  background: var(--player-match);
+  color: var(--bg);
+  font-weight: 700;
+  text-align: center;
+}
+
 .confetti {
   position: fixed;
   inset: 0;

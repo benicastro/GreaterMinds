@@ -108,7 +108,12 @@ export class Room {
     this.onStateChange();
   }
 
-  markHostDisconnected() {
+  /**
+   * Ignores a disconnect from a socket that has already been replaced: after a network drop the
+   * client can reconnect before the server notices the old socket died.
+   */
+  markHostDisconnected(socketId: string) {
+    if (this.hostSocketId !== socketId) return;
     this.hostConnected = false;
     this.hostDisconnectedAt = Date.now();
     this.touch();
@@ -147,9 +152,10 @@ export class Room {
     this.onStateChange();
   }
 
-  markPlayerDisconnected(playerId: string) {
+  /** Same stale-socket guard as `markHostDisconnected`. */
+  markPlayerDisconnected(playerId: string, socketId: string) {
     const player = this.players.get(playerId);
-    if (!player) return;
+    if (!player || player.socketId !== socketId) return;
     player.connected = false;
     player.disconnectedAt = Date.now();
     this.touch();

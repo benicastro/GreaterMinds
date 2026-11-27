@@ -96,6 +96,38 @@ export function HostProvider({ children, roomCodeFromRoute }: { children: ReactN
     });
   }, [roomCodeFromRoute, roomCode]);
 
+  // Socket.IO reconnects on its own after a drop, but the server sees the new connection as
+  // anonymous. Re-attach as host every time the connection comes back, once we're in a room.
+  const roomCodeRef = useRef<string | null>(null);
+  roomCodeRef.current = roomCode;
+  useEffect(() => {
+    function onConnect() {
+      if (!roomCodeRef.current) return; // first load / room creation are handled elsewhere
+      const stored = sessionStorage.getItem(HOST_STORAGE_KEY);
+      if (!stored) return;
+      let parsed: StoredHostSession;
+      try {
+        parsed = JSON.parse(stored);
+      } catch {
+        return;
+      }
+      socket.emit(ClientEvents.HostReconnect, parsed, (res: SuccessAck & { hostState?: HostStateSnapshot }) => {
+        if (res.success && res.hostState) {
+          setState(res.hostState);
+        } else {
+          // Room is gone (e.g. server restarted). Drop to the "Start a new game" screen.
+          setState(null);
+          setRoomCode(null);
+          setError(res.error ?? 'Lost the connection to this room.');
+        }
+      });
+    }
+    socket.on('connect', onConnect);
+    return () => {
+      socket.off('connect', onConnect);
+    };
+  }, []);
+
   const createRoom = useCallback((passcode: string) => {
     socket.emit(
       ClientEvents.HostCreateRoom,

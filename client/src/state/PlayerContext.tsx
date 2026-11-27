@@ -83,6 +83,43 @@ export function PlayerProvider({ children, roomCode }: { children: ReactNode; ro
     );
   }, [roomCode, state]);
 
+  // Socket.IO reconnects on its own after a drop (phone sleep, network blip), but the server sees
+  // the new connection as anonymous. Re-attach to our seat every time the connection comes back,
+  // so updates resume and answers are accepted without a page refresh.
+  const joinedRef = useRef(false);
+  joinedRef.current = state !== null;
+  useEffect(() => {
+    function onConnect() {
+      if (!joinedRef.current) return; // first load is handled by the effect above
+      const stored = sessionStorage.getItem(storageKey(roomCode));
+      if (!stored) return;
+      let parsed: StoredPlayerSession;
+      try {
+        parsed = JSON.parse(stored);
+      } catch {
+        return;
+      }
+      socket.emit(
+        ClientEvents.PlayerReconnect,
+        parsed,
+        (res: { success: boolean; error?: string; playerState?: PlayerStateSnapshot }) => {
+          if (res.success && res.playerState) {
+            setState(res.playerState);
+          } else {
+            // Our seat is gone (e.g. server restarted, or dropped after the grace period).
+            sessionStorage.removeItem(storageKey(roomCode));
+            setState(null);
+            setJoinError('Lost your spot in the room — join again to keep playing.');
+          }
+        },
+      );
+    }
+    socket.on('connect', onConnect);
+    return () => {
+      socket.off('connect', onConnect);
+    };
+  }, [roomCode]);
+
   const joinRoom = useCallback((roomCodeInput: string, nickname: string) => {
     setJoinError(null);
     socket.emit(ClientEvents.PlayerJoinRoom, { roomCode: roomCodeInput, nickname }, (res: JoinRoomAck) => {
