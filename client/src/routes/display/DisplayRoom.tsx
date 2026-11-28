@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { ClientEvents, GAME_NAME, ServerEvents, type DisplayStateSnapshot } from '@greater-minds/shared';
+import { ClientEvents, GAME_NAME, LIVE_MODE_NAME, ServerEvents, type DisplayStateSnapshot } from '@greater-minds/shared';
 import { socket } from '../../socket';
 import { formatWinnerAnnouncement, getWinners } from '../../winnerAnnouncement';
 import { Confetti } from '../../components/Confetti';
@@ -66,7 +66,9 @@ export function DisplayRoom() {
           <h1>{GAME_NAME}</h1>
           <RoomCodeBadge roomCode={state.roomCode} />
         </header>
-        <p>The TV display is only used in Live Mode. Switch the room to Live Mode in the host lobby.</p>
+        <p>
+          The TV display is only used in {LIVE_MODE_NAME}. Switch the room to {LIVE_MODE_NAME} in the host lobby.
+        </p>
       </div>
     );
   }

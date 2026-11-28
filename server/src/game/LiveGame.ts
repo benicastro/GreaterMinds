@@ -1,6 +1,7 @@
 import {
   LIVE_MAX_STRIKES,
   LIVE_PROMPTS_BY_ID,
+  LiveAdaptiveSelector,
   computeLiveStandings,
   type LiveHostState,
   type LivePhase,
@@ -8,7 +9,9 @@ import {
   type LiveRankedStanding,
   type LiveReviewEntry,
   type LiveRoundResult,
+  type LiveRoundTier,
   type RoomStatus,
+  type RoundSelectionMode,
   type RoundStartedPayload,
 } from '@greater-minds/shared';
 import { GameError } from '../utils/errors.js';
@@ -27,6 +30,8 @@ export interface LiveGameHost {
 
 interface LiveRound {
   promptId: string;
+  /** Adaptive mode only: which tier the prompt came from and which one the player count wanted. */
+  tier: LiveRoundTier | null;
   roundNumber: number;
   phase: LivePhase;
   endsAt: number;
@@ -48,9 +53,13 @@ interface LiveRound {
  * - With exactly two players left, the round is a "final two" round: the host also types an
  *   answer, and players must avoid it as well as each other (the host still judges by hand).
  * - The game ends when one player is left, the prompts run out, or the host ends it.
+ * - Round order: 'fixed' plays the host's list top to bottom; 'adaptive' (the default) picks each
+ *   round's prompt by tier to fit the players still in (see `LiveAdaptiveSelector`).
  */
 export class LiveGame {
   private readonly promptIds: string[];
+  /** Null in fixed round order. */
+  private readonly selector: LiveAdaptiveSelector | null;
   private roundIndex = -1;
   private readonly strikes = new Map<string, number>();
   private readonly eliminatedInRound = new Map<string, number>();
@@ -62,8 +71,11 @@ export class LiveGame {
   constructor(
     private readonly host: LiveGameHost,
     promptIds: string[],
+    roundSelectionMode: RoundSelectionMode = 'adaptive',
+    random: () => number = Math.random,
   ) {
     this.promptIds = [...promptIds];
+    this.selector = roundSelectionMode === 'adaptive' ? new LiveAdaptiveSelector(this.promptIds, random) : null;
   }
 
   // ---- queries ----
@@ -142,9 +154,25 @@ export class LiveGame {
       return;
     }
 
+    // Every round uses up one prompt in either mode, so `roundIndex` still bounds the game.
+    let promptId: string;
+    let tier: LiveRoundTier | null = null;
+    if (this.selector) {
+      const pick = this.selector.next(active.length);
+      if (!pick) {
+        this.finish();
+        return;
+      }
+      promptId = pick.promptId;
+      tier = { tier: pick.tier, wantedTier: pick.wantedTier };
+    } else {
+      promptId = this.promptIds[this.roundIndex];
+    }
+
     const durationMs = this.host.timerDurationSeconds * 1000;
     this.round = {
-      promptId: this.promptIds[this.roundIndex],
+      promptId,
+      tier,
       roundNumber: this.roundIndex + 1,
       phase: active.length === 2 ? 'final_two' : 'group',
       endsAt: Date.now() + durationMs,
@@ -306,6 +334,7 @@ export class LiveGame {
       selectedPromptIds,
       standings: this.standings(),
       phase: this.round?.phase ?? null,
+      roundTier: this.round?.tier ?? null,
       hostAnswer: this.round?.hostAnswer ?? null,
       review: this.review ? Array.from(this.review.values()).map((entry) => ({ ...entry })) : null,
       result: this.result,

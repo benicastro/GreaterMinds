@@ -10,3 +10,4 @@ export * from './introSlides.js';
 export * from './live/types.js';
 export * from './live/prompts.js';
 export * from './live/standings.js';
+export * from './live/selection.js';

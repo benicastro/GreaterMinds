@@ -4,6 +4,7 @@ import {
   HostStateSnapshot,
   INTRO_SLIDE_COUNT,
   LIVE_INTRO_SLIDE_COUNT,
+  LIVE_MODE_NAME,
   LIVE_PROMPT_REGISTRY,
   LIVE_PROMPTS_BY_ID,
   LeaderboardEntry,
@@ -320,7 +321,7 @@ export class Room {
       throw new GameError('NO_PROMPTS_SELECTED', 'Select at least one prompt before starting.');
     }
     if (this.players.size < 2) {
-      throw new GameError('NOT_ENOUGH_PLAYERS', 'Live Mode needs at least two players.');
+      throw new GameError('NOT_ENOUGH_PLAYERS', `${LIVE_MODE_NAME} needs at least two players.`);
     }
     this.live = new LiveGame(
       {
@@ -336,6 +337,7 @@ export class Room {
         },
       },
       this.livePromptIds,
+      this.roundSelectionMode,
     );
     this.status = 'starting';
     this.introSlideIndex = 0;
@@ -345,7 +347,7 @@ export class Room {
 
   private requireLive(): LiveGame {
     if (this.gameMode !== 'live' || !this.live) {
-      throw new GameError('NOT_LIVE_MODE', 'This only applies to a Live Mode game in progress.');
+      throw new GameError('NOT_LIVE_MODE', `This only applies to a ${LIVE_MODE_NAME} game in progress.`);
     }
     return this.live;
   }
@@ -633,6 +635,7 @@ export class Room {
             selectedPromptIds: this.livePromptIds,
             standings: [],
             phase: null,
+            roundTier: null,
             hostAnswer: null,
             review: null,
             result: null,

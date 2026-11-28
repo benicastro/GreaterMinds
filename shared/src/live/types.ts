@@ -1,9 +1,11 @@
 import type { RoomStatus, RoundStartedPayload } from '../types.js';
+import type { LiveTier } from './prompts.js';
 
 /**
  * Which rule set a room plays. 'classic' is the original virtual game (scores, auto-validated
- * answers). 'live' is the in-person mode: players answer on their phones, read their answers
- * aloud, and the host hands out strikes by hand — three strikes and you're out.
+ * answers). 'live' is the in-person mode, shown to people as "Three Strikes": players answer on
+ * their phones, read their answers aloud, and the host hands out strikes by hand — three strikes
+ * and you're out.
  */
 export type GameMode = 'classic' | 'live';
 
@@ -15,6 +17,16 @@ export type GameMode = 'classic' | 'live';
 export type LivePhase = 'group' | 'final_two';
 
 export const LIVE_MAX_STRIKES = 3;
+
+/** Shown wherever players or the host see the mode's name. Code keeps calling it "live". */
+export const LIVE_MODE_NAME = 'Three Strikes';
+
+/** Adaptive round order only: where this round's prompt came from. Host-only. */
+export interface LiveRoundTier {
+  tier: LiveTier;
+  /** The tier the player count called for; differs from `tier` when that tier was used up. */
+  wantedTier: LiveTier;
+}
 
 export interface LiveStanding {
   playerId: string;
@@ -56,6 +68,8 @@ export interface LiveHostState {
   standings: LiveRankedStanding[];
   /** Current/most recent round's phase, null before round 1. */
   phase: LivePhase | null;
+  /** Current/most recent round's tier in adaptive order; null in fixed order or before round 1. */
+  roundTier: LiveRoundTier | null;
   /** Host's own answer this round (final two only), null until typed. */
   hostAnswer: string | null;
   /** Strike-marking list, present during a reveal. */

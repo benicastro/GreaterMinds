@@ -1019,6 +1019,42 @@ header {
   font-weight: 400;
 }
 
+/* Three Strikes prompt tags: size tier + Funny Pool. Text labels carry the meaning; color is a hint. */
+.prompt-tags {
+  display: inline-flex;
+  gap: 0.3rem;
+  margin-left: 0.4rem;
+  vertical-align: middle;
+}
+
+.prompt-tag {
+  display: inline-block;
+  padding: 0.05rem 0.45rem;
+  border: 1px solid var(--muted);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.prompt-tag-funny {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-bg);
+}
+
+.live-tier-note {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.live-tier-note strong {
+  color: var(--player-match);
+}
+
 .live-review-list {
   list-style: none;
   padding: 0;
