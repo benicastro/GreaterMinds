@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { LIVE_PROMPT_REGISTRY, LIVE_PROMPTS_BY_ID } from './prompts.js';
+import { LIVE_OPENER_PROMPT_IDS, LIVE_PROMPT_REGISTRY, LIVE_PROMPTS_BY_ID } from './prompts.js';
 import {
   LiveAdaptiveSelector,
   buildLiveTierOrder,
@@ -17,6 +17,7 @@ function seeded(seed: number): () => number {
 }
 
 const ALL_IDS = LIVE_PROMPT_REGISTRY.map((prompt) => prompt.id);
+const NO_OPENERS = ALL_IDS.filter((id) => !LIVE_OPENER_PROMPT_IDS.includes(id));
 const idsInTier = (tier: string) => LIVE_PROMPT_REGISTRY.filter((p) => p.tier === tier).map((p) => p.id);
 const isFunny = (id: string) => Boolean(LIVE_PROMPTS_BY_ID.get(id)?.funny);
 
@@ -88,9 +89,53 @@ describe('buildLiveTierOrder', () => {
   });
 });
 
+describe('LiveAdaptiveSelector openers', () => {
+  it('opens with Color then Ends in -ent, whatever the player count', () => {
+    for (const players of [15, 6, 3, 2]) {
+      const selector = new LiveAdaptiveSelector(ALL_IDS, seeded(players));
+      const first = selector.next(players);
+      const second = selector.next(players);
+      expect([first?.promptId, second?.promptId]).toEqual(['live-color', 'live-ends-in-ent']);
+      expect(first?.opener && second?.opener).toBe(true);
+      expect(selector.next(players)?.opener).toBe(false);
+    }
+  });
+
+  it('skips an opener the host removed', () => {
+    const selector = new LiveAdaptiveSelector(
+      ALL_IDS.filter((id) => id !== 'live-color'),
+      seeded(11),
+    );
+    expect(selector.next(15)).toMatchObject({ promptId: 'live-ends-in-ent', opener: true });
+    expect(selector.next(15)?.opener).toBe(false);
+  });
+
+  it('never repeats an opener later, and keeps funny/regular pairs in Big after the openers', () => {
+    for (let seed = 1; seed <= 100; seed += 1) {
+      const selector = new LiveAdaptiveSelector(ALL_IDS, seeded(seed));
+      const played: string[] = [];
+      let pick;
+      while ((pick = selector.next(15))) played.push(pick.promptId);
+      expect(played.filter((id) => LIVE_OPENER_PROMPT_IDS.includes(id))).toEqual([...LIVE_OPENER_PROMPT_IDS]);
+      const bigAfter = played.slice(2).filter((id) => LIVE_PROMPTS_BY_ID.get(id)!.tier === 'big');
+      expect(bigAfter).toHaveLength(10);
+      for (let pair = 0; pair < 4; pair += 1) {
+        expect(isFunny(bigAfter[pair * 2]) !== isFunny(bigAfter[pair * 2 + 1])).toBe(true);
+      }
+    }
+  });
+
+  it('openers are Big, regular prompts in the registry', () => {
+    for (const id of LIVE_OPENER_PROMPT_IDS) {
+      expect(LIVE_PROMPTS_BY_ID.get(id)).toMatchObject({ tier: 'big' });
+      expect(isFunny(id)).toBe(false);
+    }
+  });
+});
+
 describe('LiveAdaptiveSelector', () => {
   it('draws from the tier that fits the player count', () => {
-    const selector = new LiveAdaptiveSelector(ALL_IDS, seeded(3));
+    const selector = new LiveAdaptiveSelector(NO_OPENERS, seeded(3));
     expect(selector.next(15)?.tier).toBe('big');
     expect(selector.next(6)?.tier).toBe('medium');
     expect(selector.next(2)?.tier).toBe('small');
@@ -98,17 +143,20 @@ describe('LiveAdaptiveSelector', () => {
 
   it('steps down a tier when the wanted one is used up, and reports it', () => {
     const selector = new LiveAdaptiveSelector(ALL_IDS, seeded(4));
-    for (let i = 0; i < 12; i += 1) expect(selector.next(15)?.tier).toBe('big');
+    for (let i = 0; i < 12; i += 1) expect(selector.next(15)?.tier).toBe('big'); // 2 openers + 10 Big
     const pick = selector.next(15);
     expect(pick?.wantedTier).toBe('big');
     expect(pick?.tier).toBe('medium');
   });
 
   it('steps up only once every smaller tier is empty', () => {
-    const selector = new LiveAdaptiveSelector(ALL_IDS, seeded(5));
+    const selector = new LiveAdaptiveSelector(NO_OPENERS, seeded(5));
     for (let i = 0; i < 6; i += 1) expect(selector.next(2)?.tier).toBe('small');
     expect(selector.next(2)).toMatchObject({ tier: 'medium', wantedTier: 'small' });
-    const mediumSelector = new LiveAdaptiveSelector([...idsInTier('big'), ...idsInTier('medium')], seeded(6));
+    const mediumSelector = new LiveAdaptiveSelector(
+      [...idsInTier('big'), ...idsInTier('medium')].filter((id) => !LIVE_OPENER_PROMPT_IDS.includes(id)),
+      seeded(6),
+    );
     for (let i = 0; i < 13; i += 1) mediumSelector.next(5);
     expect(mediumSelector.next(5)).toMatchObject({ tier: 'big', wantedTier: 'medium' });
   });

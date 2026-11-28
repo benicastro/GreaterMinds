@@ -318,6 +318,17 @@ prompt and timer. It never receives anyone's answers, the host's answer, or unco
   and up only when nothing smaller is left; the host panel shows "Big prompts used up — playing
   Medium" (host-only `roundTier` in `LiveHostState`). Disconnected players still count as in; a
   voided round keeps the same count, so the same tier. Cut-offs are constants, not a lobby setting.
+- **Fixed opening rounds** (adaptive only; `LIVE_OPENER_PROMPT_IDS` in `shared/src/live/prompts.ts`,
+  added 2026-11-28 at the user's request to make the start lighter): every adaptive game opens with
+  **Color**, then **Ends in -ent**, whatever the player count (nobody can be out before round 3,
+  so adaptivity has nothing to react to yet). Adaptive tier picking starts at round 3. Openers
+  never re-enter the tier pools and don't count toward funny/regular pairing; an opener the host
+  removed from the pool is skipped. The lobby tags them "Opener 1/2" and the host's round screen
+  says "Opening round". Fixed order ignores them (its default list already starts with Color).
+  Verified: 4 new Vitest cases (order at 15/6/3/2 players, removed opener skipped, no repeats and
+  Big pairs intact after the openers over 100 seeds; 99 tests total); scripted 15- and 3-player
+  games opened Color → -ent then went adaptive (Small from round 3 with 3 players); Playwright
+  checked the tags (adaptive only), the "Opening round" note (host only) and no overflow at 360px.
 - **Fixed round order** is still available via the same Round Order toggle Classic uses: plays the
   host's list top to bottom, no tiers. The lobby's prompt list shows Big/Medium/Small and Funny tags;
   in Adaptive it's labelled "Prompt Pool" and hides the reorder arrows (order doesn't matter there).
@@ -445,7 +456,7 @@ As of 2026-11-28, everything above is merged to `main` (PRs #1–#4) and deployi
    count as the same answer ("thumb" = "hinlalaki"), and the host may strike made-up words.
 
 **At the playtest — what to watch**
-5. Whether the 8 / 4 tier cut-offs fit the real pace of eliminations, and whether funny prompts land
+5. Whether the Color → -ent openers feel like a good warm-up, and whether the 8 / 4 tier cut-offs fit the real pace of eliminations, and whether funny prompts land
    often enough (about every other round within Big/Medium).
 6. How fast the host can mark strikes across ~15–20 answers.
 7. Whether players need a rules slide before round 1.

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { GAME_NAME, LIVE_MODE_NAME } from '@greater-minds/shared';
+import { GAME_NAME, LIVE_MODE_NAME, LIVE_OPENER_PROMPT_IDS, LIVE_PROMPTS_BY_ID } from '@greater-minds/shared';
 import { useHost } from '../../state/HostContext';
 import { RoomCodeBadge } from '../../components/RoomCodeBadge';
 import { PlayerRosterList } from '../../components/PlayerRosterList';
@@ -106,7 +106,7 @@ export function HostRoom() {
                 onChange={() => setRoundSelectionMode('adaptive')}
               />
               {isLive
-                ? 'Adaptive — each round draws a Big, Medium or Small prompt to fit how many players are still in (8+, 4–7, 2–3), with funny prompts mixed in about every other round'
+                ? `Adaptive — opens with ${LIVE_OPENER_PROMPT_IDS.map((id) => LIVE_PROMPTS_BY_ID.get(id)?.category).join(' then ')}, then each round draws a Big, Medium or Small prompt to fit how many players are still in (8+, 4–7, 2–3), with funny prompts mixed in about every other round`
                 : 'Adaptive — each round is picked to match how many players are still active, so the game narrows as people are eliminated'}
             </label>
             <label>

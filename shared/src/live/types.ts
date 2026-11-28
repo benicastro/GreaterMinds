@@ -26,6 +26,8 @@ export interface LiveRoundTier {
   tier: LiveTier;
   /** The tier the player count called for; differs from `tier` when that tier was used up. */
   wantedTier: LiveTier;
+  /** A fixed opening round, played regardless of tier — `wantedTier` doesn't apply. */
+  opener: boolean;
 }
 
 export interface LiveStanding {

@@ -1040,6 +1040,11 @@ header {
   white-space: nowrap;
 }
 
+.prompt-tag-opener {
+  border-color: var(--unique);
+  color: var(--unique);
+}
+
 .prompt-tag-funny {
   border-color: var(--accent);
   color: var(--accent);

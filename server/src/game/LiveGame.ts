@@ -164,7 +164,7 @@ export class LiveGame {
         return;
       }
       promptId = pick.promptId;
-      tier = { tier: pick.tier, wantedTier: pick.wantedTier };
+      tier = { tier: pick.tier, wantedTier: pick.wantedTier, opener: pick.opener };
     } else {
       promptId = this.promptIds[this.roundIndex];
     }

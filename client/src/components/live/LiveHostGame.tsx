@@ -25,6 +25,7 @@ function sortForReview(entries: LiveReviewEntry[]): LiveReviewEntry[] {
 /** Host-only line under the round title: which tier this prompt is from, and why if it isn't the expected one. */
 function TierNote({ roundTier }: { roundTier: LiveRoundTier | null }) {
   if (!roundTier) return null; // fixed round order
+  if (roundTier.opener) return <p className="live-tier-note">Opening round</p>;
   const tier = LIVE_TIER_LABELS[roundTier.tier];
   if (roundTier.tier === roundTier.wantedTier) {
     return <p className="live-tier-note">{tier} prompt</p>;
