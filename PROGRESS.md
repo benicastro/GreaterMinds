@@ -432,13 +432,42 @@ is open to anyone.
 
 ## Suggested next steps
 
-1. Keep playtesting in the browser and report anything that looks or feels off — hard
-   elimination in particular is worth a real multi-player playtest to see how it feels.
-2. Playtest Three Strikes in a room with real phones on the Render deployment. Worth watching:
-   whether the 8 / 4 tier cut-offs feel right for the actual pace of eliminations, whether the
-   funny prompts land often enough, how fast the host can mark strikes across ~15–20 answers, and
-   whether players need a rules slide before round 1.
+As of 2026-11-28, everything above is merged to `main` (PRs #1–#4) and deploying to Render.
+
+**Before the first Three Strikes playtest**
+1. Confirm the Render deploy is current: in a new room, picking **Three Strikes** should show the
+   Round Order toggle and Big/Medium/Small + Funny tags on the prompt list.
+2. Check the title slide image (`client/public/title-bg.png`) — if it says "Live" anywhere, it needs
+   a new image; the rename to "Three Strikes" only covered text.
 3. Set `CLIENT_ORIGIN` on the Render dashboard (declared in `render.yaml` but still unset, so the
    server falls back to wildcard CORS).
-4. Optional next round of polish: sound cues on reveal, a QR code for joining, an accessibility
-   pass (focus outlines, contrast, aria-labels).
+4. House rules for the host to announce (the game doesn't enforce them): English and Tagalog answers
+   count as the same answer ("thumb" = "hinlalaki"), and the host may strike made-up words.
+
+**At the playtest — what to watch**
+5. Whether the 8 / 4 tier cut-offs fit the real pace of eliminations, and whether funny prompts land
+   often enough (about every other round within Big/Medium).
+6. How fast the host can mark strikes across ~15–20 answers.
+7. Whether players need a rules slide before round 1.
+8. Reconnects on real phones: lock a phone mid-round for a few seconds — it should show
+   "Reconnecting…", then still get the next round and accept an answer.
+
+**After the playtest (decisions pending feedback)**
+9. Tune the tier cut-offs or move prompts between tiers if the pacing feels off; consider 1–2 spare
+   Small prompts (Small has 6, and voided rounds are most likely there).
+10. Decide whether the knowledge-heavy prompts (Pokémon starters, the two Taylor Swift prompts, Nueva
+    Ecija towns) stay — they penalize not knowing the topic more than matching.
+11. Optional Three Strikes rules slide for the intro.
+
+**Classic**
+12. Sign off on each prompt's default host answer (still placeholder picks — see "What's
+    implemented"; overridable per game in the lobby).
+13. A real multi-player playtest of hard elimination.
+
+**Backlog (not started)**
+- Rejoin after closing the tab: the phone remembers the player and offers "Rejoin as <name>"
+  (option B from the reconnect work; deliberately left out for now).
+- Sound cues on reveal, a QR code for joining, an accessibility pass (focus outlines, contrast,
+  aria-labels).
+- Automated browser/UI tests (today: unit tests + scripted socket/Playwright runs done by hand).
+- IP-based rate limiting, if per-socket limits turn out not to be enough.
