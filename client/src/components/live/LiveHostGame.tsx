@@ -1,4 +1,10 @@
-import type { HostStateSnapshot, LiveHostState, LiveReviewEntry } from '@greater-minds/shared';
+import {
+  LIVE_TIER_LABELS,
+  type HostStateSnapshot,
+  type LiveHostState,
+  type LiveReviewEntry,
+  type LiveRoundTier,
+} from '@greater-minds/shared';
 import { useHost } from '../../state/HostContext';
 import { formatWinnerAnnouncement, getWinners } from '../../winnerAnnouncement';
 import { AnswerInput } from '../AnswerInput';
@@ -16,6 +22,22 @@ function sortForReview(entries: LiveReviewEntry[]): LiveReviewEntry[] {
   return [...entries].sort((a, b) => key(a).localeCompare(key(b)) || a.nickname.localeCompare(b.nickname));
 }
 
+/** Host-only line under the round title: which tier this prompt is from, and why if it isn't the expected one. */
+function TierNote({ roundTier }: { roundTier: LiveRoundTier | null }) {
+  if (!roundTier) return null; // fixed round order
+  const tier = LIVE_TIER_LABELS[roundTier.tier];
+  if (roundTier.tier === roundTier.wantedTier) {
+    return <p className="live-tier-note">{tier} prompt</p>;
+  }
+  return (
+    <p className="live-tier-note">
+      <strong>
+        {LIVE_TIER_LABELS[roundTier.wantedTier]} prompts used up — playing {tier}
+      </strong>
+    </p>
+  );
+}
+
 /** The host's private control panel for an in-progress Live Mode game (everything after the lobby/intro). */
 export function LiveHostGame({ state, live }: { state: HostStateSnapshot; live: LiveHostState }) {
   const { submitLiveAnswer, setLiveStrike, confirmLiveRound, nextRound, forceCloseRound } = useHost();
@@ -29,6 +51,7 @@ export function LiveHostGame({ state, live }: { state: HostStateSnapshot; live: 
         <h2>
           Round {round.roundNumber} / {round.totalRounds}: {round.category}
         </h2>
+        <TierNote roundTier={live.roundTier} />
         <p>{round.promptText}</p>
         <TimerBar endsAt={round.endsAt} durationSeconds={round.durationSeconds} />
         <p>

@@ -1,6 +1,6 @@
 # GREATER MINDS — Progress Log
 
-## Status: MVP playable end-to-end — two game modes (Classic + Live)
+## Status: MVP playable end-to-end — two game modes (Classic + Three Strikes, a.k.a. Live)
 
 A full game (host + multiple players, 19 prompts, scoring, reveal, leaderboard) can be
 played in the browser today via `npm run dev`. See `Greater Minds Game Design.pdf` for the
@@ -270,7 +270,7 @@ status flow; in Live, `reveal` covers both the strike-marking step and the confi
   of the three, and the 1280px pass confirmed no visual regression from the new `flex-wrap`/
   `max-width` rules at the width they were previously never exercised at.
 
-## Live Mode (second game mode, branch `feature/live-mode`)
+## Live Mode — shown to players as "Three Strikes" (second game mode)
 
 An in-person variant of the same "don't say what I say" idea, chosen per room with a **Game Mode**
 toggle in the lobby (Classic stays the default). Classic's rules, scoring and screens are untouched:
@@ -299,13 +299,29 @@ answers sit next to each other), taps to give/remove strikes (no-answers pre-mar
 prompt and timer. It never receives anyone's answers, the host's answer, or unconfirmed strikes.
 
 **Other details:**
-- Live prompts are separate from Classic's (`shared/src/live/prompts.ts`) — just category + question
-  text. The current 20 are a **test set** (approved for playtesting, ordered big → small answer
-  pool); the user plans to replace them after testing. Since Live plays in fixed order, narrowing
-  tracks round number rather than actual players left — adaptive selection (tag each prompt with a
-  rough answer count, as Classic does) was proposed but not yet approved.
-- Rounds play in the host's chosen order; the game ends when one player is left, prompts run out, or
-  the host ends it. Final ranking (`shared/src/live/standings.ts`): survivors by fewest strikes, then
+- **Renamed "Three Strikes" in everything people see** (lobby toggle, TV display, error messages)
+  via `LIVE_MODE_NAME`; code, types and events still say `live`.
+- **Prompts** (`shared/src/live/prompts.ts`) are the user's own 31-prompt set (2026-11-28),
+  replacing the earlier 20-prompt test set. Each has a **tier** — Big (12), Medium (13), Small (6) —
+  and 10 come from a **Funny Pool** (`funny: true`; 4 Big, 6 Medium). Tiers are as the user
+  suggested except Bahay Kubo (Big → Medium: answers cluster on a few vegetables) and Omnivore
+  (Medium → Big: open-ended pool), both agreed. Prompt text is verbatim; the short category labels
+  were drafted by Claude. Small prompts all have 3+ answers (fewer guarantees a match with three
+  answering). The hard "-kat"/"-bog" word prompts deliberately keep the normal timer.
+- **Adaptive round order** (default; `shared/src/live/selection.ts`, wired in `LiveGame`): each
+  round's tier comes from players still in — 8+ → Big, 4–7 → Medium, 2–3 → Small (so the final two
+  are always Small; the host-as-third-answerer question doesn't arise). Within a tier, the order is
+  shuffled per game and dealt in **pairs of one funny + one regular** (random order within the
+  pair) until the funny ones run out — funny prompts get priority without always opening the tier.
+  (Weighted random draws were simulated and rejected: they front-load funny prompts, 54–72% chance
+  round 1 of a tier is funny.) When a tier is used up, it **steps down** to the next smaller tier,
+  and up only when nothing smaller is left; the host panel shows "Big prompts used up — playing
+  Medium" (host-only `roundTier` in `LiveHostState`). Disconnected players still count as in; a
+  voided round keeps the same count, so the same tier. Cut-offs are constants, not a lobby setting.
+- **Fixed round order** is still available via the same Round Order toggle Classic uses: plays the
+  host's list top to bottom, no tiers. The lobby's prompt list shows Big/Medium/Small and Funny tags;
+  in Adaptive it's labelled "Prompt Pool" and hides the reorder arrows (order doesn't matter there).
+- The game ends when one player is left, prompts run out, or the host ends it. Final ranking (`shared/src/live/standings.ts`): survivors by fewest strikes, then
   eliminated players by how long they lasted; ties share a rank.
 - Needs at least 2 players to start. Shows only the title slide before round 1 (Classic's rules
   infographic doesn't apply).
@@ -320,7 +336,20 @@ round to confirm scoring is unchanged, and checked timer expiry in the final two
 drove the host panel, four phones (360px) and the TV display through a round with no console errors
 and no horizontal overflow at 360px. New Vitest suite for live standings (83 tests total).
 
-**Open items:** final Live prompts (after testing); possibly adaptive prompt selection; optional Live rules slide for the intro; a real in-room playtest.
+**Adaptive selection verified:** 12 new Vitest cases (tier cut-offs, step-down order, funny/regular
+pairing over 200 seeds, ~50% funny-first, every prompt once, host-trimmed pool; 95 tests total).
+Scripted 15-player games against the real server: at a normal pace (about half struck per round) the
+tiers followed the players left (≈6 Big rounds → Medium at 4 → Small at 2) with pairs holding; at
+a deliberately slow pace (one strike per round) Big ran out at round 13 with all 15 in and the game
+stepped down to Medium, then Small, with the host note, never back up early; Fixed played an
+out-of-tier list exactly in order with no tier info; a trimmed pool only drew selected prompts; a
+voided round kept the next round's tier. Playwright at 360px and 1280px: "Three Strikes" label,
+Round Order toggle, 12/13/6 tier tags and 10 Funny tags, arrows only in Fixed, no overflow, the
+host's "Small prompt" note shown to the host and not to phones, no console errors.
+
+**Open items:** a real in-room playtest; house rules the host should announce (answers in English
+vs Tagalog count as the same answer, e.g. "thumb" = "hinlalaki"; the host may strike made-up
+words); optional rules slide for the intro; maybe 1–2 spare Small prompts.
 
 ## Bugs found and fixed during manual browser testing
 
@@ -369,7 +398,8 @@ and no horizontal overflow at 360px. New Vitest suite for live standings (83 tes
   manual browser playtesting is how UI regressions get caught for now. (Gotcha when scripting
   Playwright: a `full_page=True` screenshot swallows the very next click on that page — use a
   tall viewport instead.)
-- **Live Mode prompts are a test set**, and Live rounds play in fixed order (no adaptive pick).
+- **Three Strikes has no answer checking** — matches, language equivalents and made-up words are
+  all the host's call (by design: free-text, in-person).
 
 ## How to run it
 
@@ -404,11 +434,10 @@ is open to anyone.
 
 1. Keep playtesting in the browser and report anything that looks or feels off — hard
    elimination in particular is worth a real multi-player playtest to see how it feels.
-2. Playtest Live Mode in a room with real phones on the Render deployment, then swap in the final
-   Live prompts and decide whether Live should pick prompts adaptively by players remaining. Worth
-   watching during the playtest: whether the fixed-order prompts narrow at the right pace for the
-   actual players left, how fast the host can mark strikes across ~20 answers, and whether players
-   need a rules slide before round 1.
+2. Playtest Three Strikes in a room with real phones on the Render deployment. Worth watching:
+   whether the 8 / 4 tier cut-offs feel right for the actual pace of eliminations, whether the
+   funny prompts land often enough, how fast the host can mark strikes across ~15–20 answers, and
+   whether players need a rules slide before round 1.
 3. Set `CLIENT_ORIGIN` on the Render dashboard (declared in `render.yaml` but still unset, so the
    server falls back to wildcard CORS).
 4. Optional next round of polish: sound cues on reveal, a QR code for joining, an accessibility

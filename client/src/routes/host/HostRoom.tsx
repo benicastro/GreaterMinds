@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { GAME_NAME } from '@greater-minds/shared';
+import { GAME_NAME, LIVE_MODE_NAME } from '@greater-minds/shared';
 import { useHost } from '../../state/HostContext';
 import { RoomCodeBadge } from '../../components/RoomCodeBadge';
 import { PlayerRosterList } from '../../components/PlayerRosterList';
@@ -84,45 +84,50 @@ export function HostRoom() {
                 checked={state.gameMode === 'live'}
                 onChange={() => setGameMode('live')}
               />
-              Live — in person: everyone reads their answer aloud and you call strikes. Three strikes
-              and you're out; with two left, they also avoid your answer
+              {LIVE_MODE_NAME} — in person: everyone reads their answer aloud and you call strikes. Three
+              strikes and you're out; with two left, they also avoid your answer
+            </label>
+          </fieldset>
+          {isLive && (
+            <p className="live-display-link">
+              Optional TV display (strike board, no answers):{' '}
+              <a href={displayUrl} target="_blank" rel="noreferrer">
+                {displayUrl}
+              </a>
+            </p>
+          )}
+          <fieldset className="round-selection-mode">
+            <legend>Round Order</legend>
+            <label>
+              <input
+                type="radio"
+                name="roundSelectionMode"
+                checked={state.roundSelectionMode === 'adaptive'}
+                onChange={() => setRoundSelectionMode('adaptive')}
+              />
+              {isLive
+                ? 'Adaptive — each round draws a Big, Medium or Small prompt to fit how many players are still in (8+, 4–7, 2–3), with funny prompts mixed in about every other round'
+                : 'Adaptive — each round is picked to match how many players are still active, so the game narrows as people are eliminated'}
+            </label>
+            <label>
+              <input
+                type="radio"
+                name="roundSelectionMode"
+                checked={state.roundSelectionMode === 'fixed'}
+                onChange={() => setRoundSelectionMode('fixed')}
+              />
+              Fixed — play the list below in exactly this order
             </label>
           </fieldset>
           {isLive && state.live && (
-            <>
-              <p className="live-display-link">
-                Optional TV display (strike board, no answers):{' '}
-                <a href={displayUrl} target="_blank" rel="noreferrer">
-                  {displayUrl}
-                </a>
-              </p>
-              <LivePromptPicker selectedIds={state.live.selectedPromptIds} onChange={updateLivePromptSelection} />
-            </>
+            <LivePromptPicker
+              selectedIds={state.live.selectedPromptIds}
+              onChange={updateLivePromptSelection}
+              roundSelectionMode={state.roundSelectionMode}
+            />
           )}
           {!isLive && (
             <>
-              <fieldset className="round-selection-mode">
-                <legend>Round Order</legend>
-                <label>
-                  <input
-                    type="radio"
-                    name="roundSelectionMode"
-                    checked={state.roundSelectionMode === 'adaptive'}
-                    onChange={() => setRoundSelectionMode('adaptive')}
-                  />
-                  Adaptive — each round is picked to match how many players are still active, so the
-                  game narrows as people are eliminated
-                </label>
-                <label>
-                  <input
-                    type="radio"
-                    name="roundSelectionMode"
-                    checked={state.roundSelectionMode === 'fixed'}
-                    onChange={() => setRoundSelectionMode('fixed')}
-                  />
-                  Fixed — play the list below in exactly this order
-                </label>
-              </fieldset>
               <PromptPicker
                 selectedIds={state.selectedPromptIds}
                 onChange={updatePromptSelection}
@@ -153,7 +158,7 @@ export function HostRoom() {
             Start Game
           </button>
           {isLive && state.players.length < 2 && (
-            <p className="prompt-empty-hint">Live Mode needs at least two players to start.</p>
+            <p className="prompt-empty-hint">{LIVE_MODE_NAME} needs at least two players to start.</p>
           )}
         </section>
       )}

@@ -1,7 +1,35 @@
-import { LIVE_PROMPT_REGISTRY, LIVE_PROMPTS_BY_ID } from '@greater-minds/shared';
+import {
+  LIVE_PROMPT_REGISTRY,
+  LIVE_PROMPTS_BY_ID,
+  LIVE_TIER_LABELS,
+  type LivePromptDefinition,
+  type RoundSelectionMode,
+} from '@greater-minds/shared';
 
-/** Live Mode's round list: free-text prompts played top to bottom. */
-export function LivePromptPicker({ selectedIds, onChange }: { selectedIds: string[]; onChange: (ids: string[]) => void }) {
+function PromptTags({ prompt }: { prompt: LivePromptDefinition }) {
+  return (
+    <span className="prompt-tags">
+      <span className={`prompt-tag prompt-tag-${prompt.tier}`}>{LIVE_TIER_LABELS[prompt.tier]}</span>
+      {prompt.funny && <span className="prompt-tag prompt-tag-funny">Funny</span>}
+    </span>
+  );
+}
+
+/**
+ * Three Strikes' prompt list. In Fixed order it's the exact round sequence (reorderable). In
+ * Adaptive order it's just the pool: the game picks by tier and shuffles within each tier, so the
+ * order arrows are hidden.
+ */
+export function LivePromptPicker({
+  selectedIds,
+  onChange,
+  roundSelectionMode,
+}: {
+  selectedIds: string[];
+  onChange: (ids: string[]) => void;
+  roundSelectionMode: RoundSelectionMode;
+}) {
+  const fixed = roundSelectionMode === 'fixed';
   const selectedSet = new Set(selectedIds);
   const unselected = LIVE_PROMPT_REGISTRY.filter((prompt) => !selectedSet.has(prompt.id));
 
@@ -16,32 +44,41 @@ export function LivePromptPicker({ selectedIds, onChange }: { selectedIds: strin
 
   return (
     <div className="prompt-picker">
-      <h3>Round Order ({selectedIds.length} selected)</h3>
+      <h3>
+        {fixed ? 'Round Order' : 'Prompt Pool'} ({selectedIds.length} selected)
+      </h3>
       <p className="prompt-empty-hint">
-        Rounds play top to bottom. The game ends early once only one player is left.
+        {fixed
+          ? 'Rounds play top to bottom. The game ends early once only one player is left.'
+          : 'Each round picks a prompt from the tier that fits the players still in: Big for 8+, Medium for 4–7, Small for the last 2–3. If a tier runs out, the next smaller one is used. Remove any prompt you don’t want played.'}
       </p>
       <ol className="prompt-list">
         {selectedIds.map((id, index) => {
           const prompt = LIVE_PROMPTS_BY_ID.get(id);
           return (
             <li key={id} className="prompt-row prompt-row-selected">
-              <span className="prompt-order">{index + 1}</span>
+              {fixed && <span className="prompt-order">{index + 1}</span>}
               <span className="prompt-name">
                 {prompt?.category ?? id}
+                {prompt && <PromptTags prompt={prompt} />}
                 {prompt && <span className="prompt-text-preview"> — {prompt.promptText}</span>}
               </span>
               <div className="prompt-row-actions">
-                <button type="button" onClick={() => move(id, -1)} disabled={index === 0} aria-label="Move up">
-                  ↑
-                </button>
-                <button
-                  type="button"
-                  onClick={() => move(id, 1)}
-                  disabled={index === selectedIds.length - 1}
-                  aria-label="Move down"
-                >
-                  ↓
-                </button>
+                {fixed && (
+                  <>
+                    <button type="button" onClick={() => move(id, -1)} disabled={index === 0} aria-label="Move up">
+                      ↑
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => move(id, 1)}
+                      disabled={index === selectedIds.length - 1}
+                      aria-label="Move down"
+                    >
+                      ↓
+                    </button>
+                  </>
+                )}
                 <button
                   type="button"
                   className="prompt-remove"
@@ -62,7 +99,10 @@ export function LivePromptPicker({ selectedIds, onChange }: { selectedIds: strin
           <ul className="prompt-list prompt-list-add">
             {unselected.map((prompt) => (
               <li key={prompt.id} className="prompt-row">
-                <span className="prompt-name">{prompt.category}</span>
+                <span className="prompt-name">
+                  {prompt.category}
+                  <PromptTags prompt={prompt} />
+                </span>
                 <button type="button" onClick={() => onChange([...selectedIds, prompt.id])}>
                   + Add
                 </button>
