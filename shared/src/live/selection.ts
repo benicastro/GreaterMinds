@@ -1,4 +1,4 @@
-import { LIVE_PROMPTS_BY_ID, LIVE_TIERS, type LiveTier } from './prompts.js';
+import { LIVE_OPENER_PROMPT_IDS, LIVE_PROMPTS_BY_ID, LIVE_TIERS, type LiveTier } from './prompts.js';
 
 /** Players still in at or above which Big prompts are played. */
 export const LIVE_TIER_BIG_MIN_PLAYERS = 8;
@@ -61,21 +61,27 @@ export interface LiveAdaptivePick {
   tier: LiveTier;
   /** The tier the player count called for — differs from `tier` when that one was used up. */
   wantedTier: LiveTier;
+  /** One of the fixed opening rounds (`LIVE_OPENER_PROMPT_IDS`), played before any tier logic. */
+  opener: boolean;
 }
 
 /**
  * Adaptive round selection for Three Strikes. Built once per game from the host's selected
- * prompts; each `next()` call picks the tier for the current player count and takes that tier's
- * next prompt, falling back per `liveTierFallbackOrder` when the tier is used up.
+ * prompts. The selected openers play first, in order; after that each `next()` call picks the tier
+ * for the current player count and takes that tier's next prompt, falling back per
+ * `liveTierFallbackOrder` when the tier is used up. Openers never enter the tier queues, so they
+ * aren't repeated and don't count toward the funny/regular pairing.
  */
 export class LiveAdaptiveSelector {
+  private readonly openers: string[];
   private readonly queues: Record<LiveTier, string[]>;
 
   constructor(promptIds: string[], random: () => number = Math.random) {
+    this.openers = LIVE_OPENER_PROMPT_IDS.filter((id) => promptIds.includes(id));
     const byTier: Record<LiveTier, string[]> = { big: [], medium: [], small: [] };
     for (const id of promptIds) {
       const def = LIVE_PROMPTS_BY_ID.get(id);
-      if (def) byTier[def.tier].push(id);
+      if (def && !this.openers.includes(id)) byTier[def.tier].push(id);
     }
     this.queues = {
       big: buildLiveTierOrder(byTier.big, random),
@@ -85,15 +91,17 @@ export class LiveAdaptiveSelector {
   }
 
   remaining(): number {
-    return LIVE_TIERS.reduce((sum, tier) => sum + this.queues[tier].length, 0);
+    return this.openers.length + LIVE_TIERS.reduce((sum, tier) => sum + this.queues[tier].length, 0);
   }
 
   /** Next prompt for this many players still in, or null when every prompt has been played. */
   next(activeCount: number): LiveAdaptivePick | null {
     const wantedTier = liveTierForPlayers(activeCount);
+    const opener = this.openers.shift();
+    if (opener) return { promptId: opener, tier: LIVE_PROMPTS_BY_ID.get(opener)!.tier, wantedTier, opener: true };
     for (const tier of liveTierFallbackOrder(wantedTier)) {
       const promptId = this.queues[tier].shift();
-      if (promptId) return { promptId, tier, wantedTier };
+      if (promptId) return { promptId, tier, wantedTier, opener: false };
     }
     return null;
   }

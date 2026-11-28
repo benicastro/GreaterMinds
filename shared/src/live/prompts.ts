@@ -178,6 +178,13 @@ export const LIVE_PROMPT_REGISTRY: LivePromptDefinition[] = [
   { id: 'live-rock-paper-scissors', category: 'Rock Paper Scissors', promptText: 'Rock, Paper, Scissors! Choose one.', tier: 'small' },
 ];
 
+/**
+ * Adaptive order always opens with these, in this order, whatever the player count — an easy
+ * warm-up before strikes start to matter (nobody can be out before round 3 anyway). An opener the
+ * host removed from the pool is skipped. Fixed order ignores this list.
+ */
+export const LIVE_OPENER_PROMPT_IDS: readonly string[] = ['live-color', 'live-ends-in-ent'];
+
 export const LIVE_PROMPTS_BY_ID: Map<string, LivePromptDefinition> = new Map(
   LIVE_PROMPT_REGISTRY.map((prompt) => [prompt.id, prompt]),
 );
